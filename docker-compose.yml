@@ -1,0 +1,82 @@
+# Glass Box AI: Database Query Agent (FDA Demo)
+# Three services: postgres, jupyter (AWS Strands), openwebui
+# Usage:  cp .env.example .env  &&  docker compose up -d --build
+# Reset:  docker compose down -v   (re-runs db/init on next start)
+
+name: glassbox-db-agent
+
+services:
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fda}
+      POSTGRES_USER: ${POSTGRES_USER:-fda_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Consumed by db/init/00-roles.sh to create the read-only agent role
+      AGENT_RO_USER: ${AGENT_RO_USER:-agent_ro}
+      AGENT_RO_PASSWORD: ${AGENT_RO_PASSWORD:?set AGENT_RO_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs in filename order, only when the data volume is empty:
+      #   00-roles.sh    -> create agent_ro (SELECT only, read-only txns, statement_timeout)
+      #   10-schema.sql  -> tables, keys, indexes
+      #   20-load.sql    -> COPY from /data/*.csv
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - ./data:/data:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  jupyter:
+    build: ./jupyter          # python:3.12-slim + jupyterlab + strands-agents[openai] + pytest + psycopg
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Agent connects ONLY as the read-only role
+      DATABASE_URL: postgresql://${AGENT_RO_USER:-agent_ro}:${AGENT_RO_PASSWORD}@postgres:5432/${POSTGRES_DB:-fda}
+      LLM_MODEL_ID: ${LLM_MODEL_ID:-gpt-6-luna}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      EVAL_RUNS: ${EVAL_RUNS:-5}
+    volumes:
+      - ./agent:/workspace/agent          # system prompt, skills, tools (single source of truth)
+      - ./tests:/workspace/tests
+      - ./notebooks:/workspace/notebooks
+    working_dir: /workspace
+    command: >
+      jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
+      --IdentityProvider.token=${JUPYTER_TOKEN:?set JUPYTER_TOKEN in .env}
+    ports:
+      - "127.0.0.1:8888:8888"
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main   # TODO: pin to a tested release tag
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?set WEBUI_SECRET_KEY in .env}
+      ENABLE_OLLAMA_API: "false"
+      # OpenAI and Gemini (via its OpenAI-compatible endpoint), semicolon-separated
+      OPENAI_API_BASE_URLS: "https://api.openai.com/v1;https://generativelanguage.googleapis.com/v1beta/openai"
+      OPENAI_API_KEYS: "${OPENAI_API_KEY:-};${GEMINI_API_KEY:-}"
+      # Read by the run_query tool code; same read-only role as Strands
+      DATABASE_URL: postgresql://${AGENT_RO_USER:-agent_ro}:${AGENT_RO_PASSWORD}@postgres:5432/${POSTGRES_DB:-fda}
+    volumes:
+      # Bind mount so webui.db (prompt, skills, tools config) can be copied out and reused.
+      # Gitignored: it can contain API keys. Scrub before sharing.
+      - ./openwebui/data:/app/backend/data
+    ports:
+      - "127.0.0.1:3000:8080"
+
+volumes:
+  pgdata:
