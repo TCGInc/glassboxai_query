@@ -1,0 +1,16 @@
+# Local secrets and Open WebUI state
+.env
+.env.*
+!.env.example
+openwebui/data/*
+!openwebui/data/.gitkeep
+
+# Generated FDA snapshots (recreate with scripts/convert_fda_workbooks.py)
+data/*.csv
+data/fda_import_manifest.json
+
+# Python bytecode and local test/lint caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
