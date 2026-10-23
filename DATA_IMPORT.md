@@ -17,6 +17,6 @@ python -m pip install -r requirements-import.txt
 python scripts/convert_fda_workbooks.py
 ```
 
-The script writes UTF-8 CSV snapshots to `data/` (`fda_inspections.csv`, `fda_citations.csv`, and `fda_recall_events.csv`) and records source/output hashes, row counts, worksheet names, and columns in `data/fda_import_manifest.json`. It validates the expected worksheet and headers before conversion, skips entirely blank rows, and stops if a downloaded export's schema changes. Use `--input-dir` or `--output-dir` to select alternate folders. These CSVs are intended for the later PostgreSQL load.
+The script writes UTF-8 CSV files to `data/` (`fda_inspections.csv`, `fda_citations.csv`, and `fda_recall_events.csv`). It expects one worksheet per workbook, takes the first row as the CSV header, and skips entirely blank rows. It does not impose FDA-specific column schemas; table-specific validation belongs in the database loader. These CSVs are intended for the later PostgreSQL load.
 
 To refresh the snapshot, download all three current FDA workbooks, put them in `data/raw/` under the canonical names above, and rerun the command. Preserve the downloaded workbooks so a refresh can be reproduced and reviewed.
