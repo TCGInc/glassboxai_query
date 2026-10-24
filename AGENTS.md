@@ -44,6 +44,8 @@ This demo follows an analysis-assistant pattern TCG built for a federal financia
 | **Tool 2: `create_plan(steps: str)`** | The model records a multi-step plan, one step per line. The plan lives in a module-level variable, so a new plan replaces the old one. Returns the plan rendered with numbered lines, a status, and notes. |
 | **Tool 3: `complete_step(step: int, note: str = "")`** | Marks a step done, with an optional note, and returns the re-rendered plan. |
 
+Native skill loading adds one loader tool of its own in each runtime (Strands' `skills`; Open WebUI's `view_skill`). That is expected: "three tools" counts the tools we write. Parity tests should compare what each runtime actually exposes to the model.
+
 Design principle: keep the tools simple and assume the model is capable. Planned but not built: saving large query results to disk and processing them outside the context.
 
 ### Hard constraints
@@ -124,7 +126,7 @@ Tests are `.py` files under `tests/` (not notebooks). The notebook is a demo sur
   notes: "Fiscal year runs Oct 1 - Sep 30. Verified by hand against ..."
 ```
 
-Start with ~10 questions across the tiers and grow toward ~20.
+`tests/questions.yaml` currently has 20 questions across the five tiers. Grow it only when a new behavior needs covering.
 
 ---
 

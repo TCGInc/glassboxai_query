@@ -119,7 +119,13 @@ docker compose exec jupyter pytest -m "not agent"
 
 # Agent benchmark: each question runs several times (uses API tokens)
 docker compose exec jupyter pytest -m agent
+
+# Just some questions or tiers (comma-separated), fewer runs
+docker compose exec -e EVAL_QUESTIONS=q001,q014 -e EVAL_RUNS=3 jupyter pytest -m agent
+docker compose exec -e EVAL_TIERS=ambiguous,unanswerable jupyter pytest -m agent
 ```
+
+Each benchmark run prints a per-question and per-tier summary and saves every run's final answer and queries to `tests/reports/` (gitignored) so you can inspect the agent's work.
 
 The benchmark reports, per question and overall:
 - **Correctness:** did the agent's answer match the verified answer?
@@ -142,9 +148,10 @@ scripts/
 agent/
   system_prompt.md
   skills/
-    database.md
-    terminology.md
+    database/SKILL.md
+    terminology/SKILL.md
   tools.py              # run_query, create_plan, complete_step
+  strands_agent.py      # wires the above into AWS Strands
 db/
   init/                 # roles, schema, data load (runs on first start)
 data/
@@ -157,8 +164,10 @@ notebooks/
   demo.ipynb
 tests/
   questions.yaml        # NL question + gold SQL (answers computed at test time)
-  test_tools.py
-  test_agent_evals.py
+  test_tools.py         # tools and agent_ro role (Tier 1)
+  test_questions.py     # every gold query runs (Tier 1)
+  test_agent_evals.py   # the benchmark (Tier 2)
+  grading.py, evalreport.py, questions.py, fake_model.py   # helpers
 openwebui/
   data/                 # Open WebUI state (webui.db), gitignored
 AGENTS.md               # context for AI coding assistants and contributors
@@ -168,9 +177,9 @@ AGENTS.md               # context for AI coding assistants and contributors
 
 ## Roadmap
 - [x] Select and profile the dataset; build the loader and frozen snapshot
-- [ ] Write the system prompt and the two skills
-- [ ] Implement the three tools and deterministic tests
-- [ ] Build the Strands agent; reach consistent benchmark results
+- [x] Write the system prompt and the two skills (first draft; needs tuning against real runs)
+- [x] Implement the three tools and deterministic tests
+- [ ] Build the Strands agent; reach consistent benchmark results (wired and tested with a scripted model; needs live runs)
 - [ ] Replicate the agent in Open WebUI
 - [ ] Automated cross-runtime parity check
 

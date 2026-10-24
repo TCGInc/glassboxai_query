@@ -52,6 +52,9 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       EVAL_RUNS: ${EVAL_RUNS:-5}
+      EVAL_MIN_CORRECT: ${EVAL_MIN_CORRECT:-0.8}
+      EVAL_QUESTIONS: ${EVAL_QUESTIONS:-}
+      EVAL_TIERS: ${EVAL_TIERS:-}
     volumes:
       - ./agent:/workspace/agent          # system prompt, skills, tools (single source of truth)
       - ./tests:/workspace/tests
