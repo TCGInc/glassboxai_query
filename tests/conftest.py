@@ -9,6 +9,22 @@ def pytest_configure(config: pytest.Config) -> None:
     )
 
 
+def pytest_terminal_summary(terminalreporter) -> None:
+    import os
+
+    import evalreport
+
+    if not evalreport.RESULTS:
+        return
+    terminalreporter.section("agent eval summary")
+    for line in evalreport.render(evalreport.RESULTS):
+        terminalreporter.write_line(line)
+    path = evalreport.write_report(
+        evalreport.RESULTS, os.environ.get("LLM_MODEL_ID", "")
+    )
+    terminalreporter.write_line(f"\nFull report: {path}")
+
+
 @pytest.fixture(autouse=True)
 def fresh_plan() -> None:
     reset_plan()

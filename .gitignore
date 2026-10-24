@@ -13,3 +13,6 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+
+# Eval reports (contain full agent transcripts)
+tests/reports/

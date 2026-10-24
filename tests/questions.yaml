@@ -1,0 +1,205 @@
+# Benchmark questions. Answers are never stored: the harness runs gold_sql at
+# test time (as agent_ro), so these hold up when the FDA data is refreshed.
+#
+# expect: answer       -> gold_sql required; the agent's result must match it
+#         clarify      -> tier "ambiguous"; the agent must ask instead of answering
+#         unavailable  -> tier "unanswerable"; the agent must say the data cannot answer
+# shape: sanity bounds checked by Tier 1 on the gold result (columns, min_rows, max_rows)
+#
+# Every gold_sql was run against the snapshot and cross-checked against an
+# independently written formulation (noted per question).
+
+# --- easy -------------------------------------------------------------------
+
+- id: q001
+  tier: easy
+  expect: answer
+  question: "How many inspections ended in fiscal year 2025?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.inspections WHERE fiscal_year = 2025
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Fiscal year runs Oct 1 - Sep 30. Cross-checked with a date range on inspection_end_date."
+
+- id: q002
+  tier: easy
+  expect: answer
+  question: "How many Class I recall events were classified in fiscal year 2025?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.recall_events
+    WHERE event_classification = 'Class I'
+      AND center_classification_date BETWEEN '2024-10-01' AND '2025-09-30'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Recalls have no fiscal year column. Cross-checked by deriving the year with a 3-month shift."
+
+- id: q003
+  tier: easy
+  expect: answer
+  question: "Which regulation (Act/CFR number) is cited most often across all citations?"
+  gold_sql: |
+    SELECT act_cfr_number FROM fda.citations
+    GROUP BY act_cfr_number ORDER BY COUNT(*) DESC LIMIT 1
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "No tie for first place (checked the top three)."
+
+- id: q004
+  tier: easy
+  expect: answer
+  question: "How many recall events have the status Ongoing?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.recall_events WHERE status = 'Ongoing'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Counts events, not products."
+
+# --- medium -----------------------------------------------------------------
+
+- id: q005
+  tier: medium
+  expect: answer
+  question: "Which three project areas had the most OAI inspection results in fiscal year 2025, and how many results each?"
+  gold_sql: |
+    SELECT d.project_area, COUNT(*)
+    FROM fda.inspections i JOIN fda.inspection_details d USING (inspection_id)
+    WHERE i.fiscal_year = 2025 AND d.classification = 'Official Action Indicated (OAI)'
+    GROUP BY d.project_area ORDER BY COUNT(*) DESC, d.project_area LIMIT 3
+  shape: {columns: 2, min_rows: 3, max_rows: 3}
+  notes: "'Results' counts inspection_details rows. No tie at the third-place cutoff."
+
+- id: q006
+  tier: medium
+  expect: answer
+  question: "How many distinct inspections in fiscal year 2025 had at least one OAI result?"
+  gold_sql: |
+    SELECT COUNT(DISTINCT i.inspection_id)
+    FROM fda.inspections i JOIN fda.inspection_details d USING (inspection_id)
+    WHERE i.fiscal_year = 2025 AND d.classification = 'Official Action Indicated (OAI)'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Cross-checked with an IN subquery. Smaller than the OAI result count because some inspections have several OAI results."
+
+- id: q007
+  tier: medium
+  expect: answer
+  question: "What percentage of inspections in fiscal year 2025 had posted citations? Round to one decimal place."
+  gold_sql: |
+    SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE posted_citations) / COUNT(*), 1)
+    FROM fda.inspections WHERE fiscal_year = 2025
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Percentage of distinct inspections, not of detail rows."
+
+- id: q008
+  tier: medium
+  expect: answer
+  question: "For fiscal year 2024, how many recall events were there in each recall class?"
+  gold_sql: |
+    SELECT event_classification, COUNT(*) FROM fda.recall_events
+    WHERE center_classification_date BETWEEN '2023-10-01' AND '2024-09-30'
+    GROUP BY event_classification ORDER BY event_classification
+  shape: {columns: 2, min_rows: 3, max_rows: 3}
+  notes: "Event-level class, by classification date."
+
+- id: q009
+  tier: medium
+  expect: answer
+  question: "How many inspections in fiscal year 2025 were of firms outside the United States?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.inspections
+    WHERE fiscal_year = 2025 AND country_area <> 'United States'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Foreign means country_area other than 'United States'."
+
+# --- hard -------------------------------------------------------------------
+
+- id: q010
+  tier: hard
+  expect: answer
+  question: "How many firms (by FEI) had a Class I recall event classified in fiscal year 2025 and also had an OAI inspection result in fiscal year 2025?"
+  gold_sql: |
+    SELECT COUNT(DISTINCT r.fei_number) FROM fda.recall_events r
+    WHERE r.event_classification = 'Class I'
+      AND r.center_classification_date BETWEEN '2024-10-01' AND '2025-09-30'
+      AND EXISTS (
+        SELECT 1 FROM fda.inspections i JOIN fda.inspection_details d USING (inspection_id)
+        WHERE i.fei_number = r.fei_number AND i.fiscal_year = 2025
+          AND d.classification = 'Official Action Indicated (OAI)')
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Firm-level join on FEI. Cross-checked with INTERSECT of the two firm sets."
+
+- id: q011
+  tier: hard
+  expect: answer
+  question: "How many products were in Class I recall events classified in fiscal year 2025?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.recalled_products p JOIN fda.recall_events e USING (event_id)
+    WHERE e.event_classification = 'Class I'
+      AND e.center_classification_date BETWEEN '2024-10-01' AND '2025-09-30'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "The event's class decides membership, not each product's own class. Cross-checked with an IN subquery."
+
+- id: q012
+  tier: hard
+  expect: answer
+  question: "For fiscal year 2025, how many distinct inspections had an OAI result, broken down by product type?"
+  gold_sql: |
+    SELECT d.product_type, COUNT(DISTINCT i.inspection_id)
+    FROM fda.inspections i JOIN fda.inspection_details d USING (inspection_id)
+    WHERE i.fiscal_year = 2025 AND d.classification = 'Official Action Indicated (OAI)'
+    GROUP BY d.product_type ORDER BY COUNT(DISTINCT i.inspection_id) DESC, d.product_type
+  shape: {columns: 2, min_rows: 6, max_rows: 6}
+  notes: "An inspection can appear under more than one product type, so the rows sum to more than the distinct total."
+
+- id: q013
+  tier: hard
+  expect: answer
+  question: "How many recall events classified in fiscal year 2025 mention Salmonella in the reason for recall?"
+  gold_sql: |
+    SELECT COUNT(DISTINCT e.event_id)
+    FROM fda.recall_events e JOIN fda.recalled_products p USING (event_id)
+    WHERE e.center_classification_date BETWEEN '2024-10-01' AND '2025-09-30'
+      AND p.reason_for_recall ILIKE '%salmonella%'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Counts events, not products. Case-insensitive text match on reason_for_recall only."
+
+# --- ambiguous: the agent should ask, not answer -----------------------------
+
+- id: q014
+  tier: ambiguous
+  expect: clarify
+  question: "How many inspections were there last year?"
+  notes: "Which year, and fiscal or calendar? The data ends in October 2026."
+
+- id: q015
+  tier: ambiguous
+  expect: clarify
+  question: "How many inspections failed in 2025?"
+  notes: "'Failed' is not an FDA term (OAI only, or VAI and OAI?), and 2025 may be fiscal or calendar."
+
+- id: q016
+  tier: ambiguous
+  expect: clarify
+  question: "Which firms are the worst offenders?"
+  notes: "No measure of 'worst' (OAI inspections, citations, Class I recalls?) and no time frame."
+
+# --- unanswerable: the data cannot answer, and the agent should say so -------
+
+- id: q017
+  tier: unanswerable
+  expect: unavailable
+  question: "How many warning letters did the FDA issue to drug manufacturers in fiscal year 2025?"
+  notes: "Compliance actions such as warning letters are not in this dataset."
+
+- id: q018
+  tier: unanswerable
+  expect: unavailable
+  question: "On average, how many days did it take to complete a Class I recall?"
+  notes: "Recalls have a classification date only, with no start or end date."
+
+- id: q019
+  tier: unanswerable
+  expect: unavailable
+  question: "How many inspections were there in fiscal year 2005?"
+  notes: "Inspection data starts in fiscal year 2009. A bare 0 would be a wrong answer."
+
+- id: q020
+  tier: unanswerable
+  expect: unavailable
+  question: "How many people were hospitalized because of recalled food products in 2024?"
+  notes: "No injury, illness, or hospitalization data."
