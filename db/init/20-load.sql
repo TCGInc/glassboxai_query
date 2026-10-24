@@ -56,6 +56,11 @@ COPY stg_citations FROM '/data/fda_citations.csv'
 COPY stg_recall_products FROM '/data/fda_recall_events.csv'
   WITH (FORMAT csv, HEADER MATCH, ENCODING 'UTF8');
 
+-- Give the planner real statistics for the validation queries below.
+ANALYZE stg_inspections;
+ANALYZE stg_citations;
+ANALYZE stg_recall_products;
+
 DO $$
 BEGIN
   IF EXISTS (
@@ -113,15 +118,18 @@ BEGIN
     RAISE EXCEPTION 'Citation references a blank or unknown Inspection ID';
   END IF;
 
-  IF EXISTS (
-    SELECT 1
+  -- Inspection-level fields were just shown to be constant within an Inspection
+  -- ID, so joining the detail rows directly is equivalent to joining distinct
+  -- inspections. Use count(*) rather than EXISTS: the planner expects EXISTS on
+  -- this OR to find a mismatch quickly, picks a nested loop, and never finishes.
+  IF (
+    SELECT COUNT(*)
     FROM stg_citations c
-    JOIN (SELECT DISTINCT "Inspection ID", "FEI Number", "Legal Name", "Inspection End Date"
-          FROM stg_inspections) i USING ("Inspection ID")
+    JOIN stg_inspections i USING ("Inspection ID")
     WHERE c."FEI Number" IS DISTINCT FROM i."FEI Number"
        OR c."Legal Name" IS DISTINCT FROM i."Legal Name"
        OR c."Inspection End Date" IS DISTINCT FROM i."Inspection End Date"
-  ) THEN
+  ) > 0 THEN
     RAISE EXCEPTION 'Citation firm or date fields do not match the inspection export';
   END IF;
 
