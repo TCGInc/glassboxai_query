@@ -11,5 +11,6 @@ COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 ENV PYTHONPATH=/workspace
+RUN mkdir /workspace && chown glassbox:glassbox /workspace
 WORKDIR /workspace
 USER glassbox

@@ -31,7 +31,7 @@ And one more: **the same agent behaves the same way in two different runtimes.**
                  │  • 2 skills: database guide,  │
                  │    terminology guide          │
                  │  • 3 tools: run_query,        │
-                 │    create_plan, next_step     │
+                 │    create_plan, complete_step │
                  └──────────────┬────────────────┘
                  ┌──────────────┴──────────────┐
         ┌────────▼────────┐          ┌─────────▼────────┐
@@ -52,8 +52,8 @@ And one more: **the same agent behaves the same way in two different runtimes.**
 | **System prompt** | Sets a professional analyst's posture and tells the model to flag ambiguity and unknowns. |
 | **Database skill** | A plain-language guide to the tables, how they connect, and what the data does *not* cover. |
 | **Terminology skill** | Maps regulatory vocabulary (for example, recall classes and inspection outcomes) to the actual fields and codes. |
-| **`run_query`** | Runs a single read-only `SELECT`. The agent uses it both to explore the schema and to answer questions. |
-| **`create_plan` / `next_step`** | Let the agent write a short plan and work through it step by step, so multi-step questions don't go off the rails. |
+| **`run_query`** | Runs a single `SELECT` and returns up to 50 rows. The agent uses it both to explore the schema and to answer questions. |
+| **`create_plan` / `complete_step`** | Let the agent write a short plan and work through it step by step, so multi-step questions don't go off the rails. |
 
 ### Guardrails
 - The agent connects as a **read-only database role** with a query timeout. It cannot change data.
@@ -144,7 +144,7 @@ agent/
   skills/
     database.md
     terminology.md
-  tools.py              # run_query, create_plan, next_step
+  tools.py              # run_query, create_plan, complete_step
 db/
   init/                 # roles, schema, data load (runs on first start)
 data/

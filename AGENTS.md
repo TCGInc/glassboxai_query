@@ -40,9 +40,11 @@ This demo follows an analysis-assistant pattern TCG built for a federal financia
 | **System prompt** | Professional, context-rich. Instructs the model to say plainly when a question is ambiguous or the data can't answer it, and to **ask the user for clarification rather than guess**. |
 | **Skill 1: database** | Informational doc: what the dataset is, tables, keys, joins, coverage limits, known data-quality gotchas. |
 | **Skill 2: terminology** | Informational doc: analyst/regulatory vocabulary mapped to columns and coded values. |
-| **Tool 1: `run_query(sql)`** | Executes a single read-only `SELECT` and returns rows (with a row cap). The model uses it for schema discovery too (`information_schema`). |
-| **Tool 2: `create_plan(steps)`** | The model records an ordered list of steps for a multi-step question. |
-| **Tool 3: `next_step(...)`** | Records the outcome of the current step and returns the next one. Keeps small models on track. |
+| **Tool 1: `run_query(sql: str)`** | Executes a single `SELECT` (or `WITH ... SELECT`) and returns at most 50 rows as a text table, so results don't flood the context. A simple regex rejects anything else; it is a convenience and a visible limit, not the security control (the database role is). The model uses it for schema discovery too (`information_schema`). |
+| **Tool 2: `create_plan(steps: str)`** | The model records a multi-step plan, one step per line. The plan lives in a module-level variable, so a new plan replaces the old one. Returns the plan rendered with numbered lines, a status, and notes. |
+| **Tool 3: `complete_step(step: int, note: str = "")`** | Marks a step done, with an optional note, and returns the re-rendered plan. |
+
+Design principle: keep the tools simple and assume the model is capable. Planned but not built: saving large query results to disk and processing them outside the context.
 
 ### Hard constraints
 - **Three tools. Two skills. One system prompt.** Do not add tools, skills, retrieval/RAG, or helper agents without explicit approval from the project lead. Simplicity is the point of the demo.
@@ -164,5 +166,4 @@ docker compose exec jupyter pytest -m agent         # agent evals (uses tokens)
 ---
 
 ## 9. Open decisions
-- Precise signatures for `create_plan` / `next_step` (mirror the proven design).
 - Matching rule for free-text final answers: how to extract a scalar or result set from prose (the normalization rules are in section 5).
