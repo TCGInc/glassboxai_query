@@ -298,3 +298,27 @@
   expect: unavailable
   question: "How many Class I recalls were classified in fiscal year 2011?"
   notes: "Database skill: recall classification dates start on 2012-06-08, so fiscal year 2011 is not covered. A bare 0 would be wrong."
+
+# --- demo prompts: table-shaped questions used as suggested prompts in Open WebUI ---
+
+- id: q029
+  tier: medium
+  expect: answer
+  question: "Please break down the number of recalls by product type for fiscal year 2025."
+  gold_sql: |
+    SELECT product_type, COUNT(*) FROM fda.recall_events
+    WHERE center_classification_date BETWEEN '2024-10-01' AND '2025-09-30'
+    GROUP BY product_type ORDER BY COUNT(*) DESC, product_type
+  shape: {columns: 2, min_rows: 5, max_rows: 5}
+  notes: "Terminology skill: 'recalls' means recall events. The rows sum to all events classified that year; Tobacco has none in FY 2025. Cross-checked against the total event count for the year."
+
+- id: q030
+  tier: medium
+  expect: answer
+  question: "Which five states had the most inspections in fiscal year 2025, and how many inspections did each have?"
+  gold_sql: |
+    SELECT state, COUNT(*) FROM fda.inspections
+    WHERE fiscal_year = 2025 AND state <> '-'
+    GROUP BY state ORDER BY COUNT(*) DESC, state LIMIT 5
+  shape: {columns: 2, min_rows: 5, max_rows: 5}
+  notes: "Database skill: '-' is a placeholder for non-U.S. locations and is the largest group, so it is excluded. No tie at fifth place."

@@ -32,18 +32,22 @@ MODEL_NAME = "Glass Box FDA"
 TOOL_FUNCTIONS = (tools.run_query, tools.create_plan, tools.complete_step)
 
 # Shown on a new chat. Each is the exact text of a benchmark question in tests/questions.yaml
-# (q008, q010, q017), so every demo prompt is regression-tested: a breakdown, a multi-step
-# question across datasets, and one the data cannot answer.
+# (q008, q029, q030, q017), so every demo prompt is regression-tested: three table-shaped
+# questions, then one the data cannot answer.
 SUGGESTED_PROMPTS = [
     {
         "title": ["Recalls by class", "how many in each class?"],
         "content": "For fiscal year 2024, how many recall events were there in each recall class?",
     },
     {
-        "title": ["Recalls and inspections", "firms in both"],
+        "title": ["Recalls by product type", "food, drugs, devices and more"],
+        "content": "Please break down the number of recalls by product type for fiscal year 2025.",
+    },
+    {
+        "title": ["Busiest states", "the top five for inspections"],
         "content": (
-            "How many firms (by FEI) had a Class I recall event classified in fiscal year 2025 "
-            "and also had an OAI inspection result in fiscal year 2025?"
+            "Which five states had the most inspections in fiscal year 2025, "
+            "and how many inspections did each have?"
         ),
     },
     {

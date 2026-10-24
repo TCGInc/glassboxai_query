@@ -45,6 +45,16 @@ def answer_from_output(output: list[dict]) -> Answer:
     return answer
 
 
+def answer_from_message(message: dict) -> Answer:
+    """The Answer in a finished assistant message; an empty one is an error with the raw record."""
+    answer = answer_from_output(message.get("output") or [])
+    if not answer.text:
+        raise RuntimeError(
+            f"Open WebUI returned an empty answer: {json.dumps(message)[:600]}"
+        )
+    return answer
+
+
 _client: OpenWebUI | None = None
 
 
@@ -120,7 +130,7 @@ def ask_openwebui(question: str) -> Answer:
             if message.get("error"):
                 raise RuntimeError(f"Open WebUI reported an error: {message['error']}")
             if message.get("done"):
-                return answer_from_output(message.get("output") or [])
+                return answer_from_message(message)
             time.sleep(POLL_SECONDS)
         raise TimeoutError(f"Open WebUI did not finish within {TIMEOUT_SECONDS}s")
     finally:

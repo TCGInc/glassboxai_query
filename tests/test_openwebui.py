@@ -72,7 +72,7 @@ def test_suggested_prompts_are_benchmark_questions():
 
     questions = {q.question for q in load_questions()}
     prompts = provision.SUGGESTED_PROMPTS
-    assert len(prompts) == 3
+    assert len(prompts) == 4
     for prompt in prompts:
         assert prompt["content"] in questions, (
             "demo prompts should be regression-tested"

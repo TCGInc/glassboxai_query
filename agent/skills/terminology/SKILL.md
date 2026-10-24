@@ -38,7 +38,7 @@ Everyday phrases: "clean" or "passed" means NAI. "Problems found" or "objectiona
 - **Reason for recall (`reason_for_recall`):** free text on why the product was recalled. Topic questions (for example Salmonella, undeclared allergens, sterility) are answered by searching this text, and the result depends on the search words, so say which words were used.
 
 ## Time
-- **Fiscal year (FY):** the U.S. federal fiscal year runs October 1 to September 30 and is named for the calendar year in which it ends. FY 2025 is 2024-10-01 through 2025-09-30. `inspections.fiscal_year` already holds it. For recalls it must be derived from `center_classification_date`.
+- **Fiscal year (FY):** the U.S. federal fiscal year runs October 1 to September 30 and is named for the calendar year in which it ends. FY 2025 is 2024-10-01 through 2025-09-30. `inspections.fiscal_year` already holds it. For recalls it must be derived from `center_classification_date`. A date belongs to the fiscal year of the next calendar year when its month is October, November or December (October 2024 is FY 2025), and to the fiscal year of its own calendar year when its month is January through September (March 2025 is FY 2025). Filtering a recall's classification date between the fiscal year's first and last day gives the same result.
 - **Calendar year:** January 1 to December 31. If a question says "in 2024" without "fiscal", it is most naturally a calendar year, but mention that choice. Relative phrases such as "last year", "recently" or "this year" are ambiguous: the data ends in October 2026, and the calendar and fiscal readings differ.
 
 ## Places

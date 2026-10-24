@@ -127,7 +127,7 @@ Tests are `.py` files under `tests/` (not notebooks). The notebook is a demo sur
   notes: "Fiscal year runs Oct 1 - Sep 30. Verified by hand against ..."
 ```
 
-`tests/questions.yaml` currently has 28 questions across the five tiers, including skill-resolved questions (wording that is only unambiguous with the skills' defaults) and skill-dependent traps. `tests/ablate.py` runs questions with and without the skills to show what they contribute. Prefer questions that are unambiguous once the domain knowledge is applied over questions with no single right answer; the `ambiguous` tier is kept because it backs the demo's honesty claim and is graded only in interactive mode. Grow the set only when a new behavior needs covering.
+`tests/questions.yaml` currently has 30 questions across the five tiers, including skill-resolved questions (wording that is only unambiguous with the skills' defaults) and skill-dependent traps. `tests/ablate.py` runs questions with and without the skills to show what they contribute. Prefer questions that are unambiguous once the domain knowledge is applied over questions with no single right answer; the `ambiguous` tier is kept because it backs the demo's honesty claim and is graded only in interactive mode. Grow the set only when a new behavior needs covering.
 
 ---
 

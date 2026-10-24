@@ -2,7 +2,8 @@
 
 import json
 
-from openwebui_runtime import answer_from_output
+import pytest
+from openwebui_runtime import answer_from_message, answer_from_output
 
 OUTPUT = [
     {
@@ -50,3 +51,9 @@ def test_answer_from_output_pairs_calls_with_results():
 def test_answer_without_tool_calls():
     answer = answer_from_output([OUTPUT[-1]])
     assert answer.text and answer.queries == [] and answer.tool_calls == []
+
+
+def test_an_empty_answer_is_an_error_that_keeps_the_raw_message():
+    with pytest.raises(RuntimeError, match="empty answer.*abc"):
+        answer_from_message({"id": "abc", "done": True, "output": []})
+    assert answer_from_message({"output": OUTPUT}).text == "There are 37,891 events."
