@@ -82,6 +82,11 @@ def complete_step(step: int, note: str = "") -> str:
     return _render_plan()
 
 
+def reset_plan() -> None:
+    """Forget the current plan. Not a model tool: runtimes call it between conversations."""
+    _plan.clear()
+
+
 def _format_rows(columns: list[str], rows: list[tuple]) -> str:
     shown = rows[:MAX_ROWS]
     lines = [

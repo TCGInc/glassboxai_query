@@ -1,6 +1,6 @@
 import pytest
 
-from agent import tools
+from agent.tools import reset_plan
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -10,5 +10,5 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 @pytest.fixture(autouse=True)
-def reset_plan() -> None:
-    tools._plan.clear()
+def fresh_plan() -> None:
+    reset_plan()
