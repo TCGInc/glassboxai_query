@@ -93,7 +93,7 @@ cp .env.example .env        # add your API key(s) and passwords
 | Service | URL |
 |---|---|
 | JupyterLab | http://localhost:8888 (token from `JUPYTER_TOKEN`) |
-| Open WebUI | http://localhost:3000 (log in with `WEBUI_ADMIN_EMAIL` / `WEBUI_ADMIN_PASSWORD`, then choose the **Glass Box FDA** model) |
+| Open WebUI | http://localhost:3000 (log in as `admin@tcg.com` / `demo` unless you changed them in `.env`, then choose the **Glass Box FDA** model; `start.sh` prints the login) |
 | PostgreSQL | localhost:5432 (admin only; the agents use the read-only role) |
 
 The first start loads the dataset into Postgres (under a minute once the CSVs exist). To reload from scratch, run `./stop.sh --reset`.
@@ -107,7 +107,7 @@ The first start loads the dataset into Postgres (under a minute once the CSVs ex
 | `POSTGRES_PASSWORD` | Admin password (init scripts only) |
 | `AGENT_RO_PASSWORD` | Password for the agents' read-only role |
 | `JUPYTER_TOKEN` | JupyterLab access token |
-| `WEBUI_ADMIN_EMAIL` / `WEBUI_ADMIN_PASSWORD` | Open WebUI admin login, created on first start |
+| `WEBUI_ADMIN_EMAIL` / `WEBUI_ADMIN_PASSWORD` | Open WebUI admin login, created on first start (defaults `admin@tcg.com` / `demo`) |
 | `WEBUI_SECRET_KEY` | Open WebUI session secret |
 
 ---

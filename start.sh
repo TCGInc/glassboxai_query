@@ -31,6 +31,13 @@ docker compose up -d --build --wait --wait-timeout 900
 docker compose exec -T jupyter python -m agent.openwebui_provision \
   || echo "Warning: Open WebUI was not configured; rerun: docker compose exec jupyter python -m agent.openwebui_provision" >&2
 
+# Read the effective values from the container, so compose defaults show up too.
+webui_email="$(docker compose exec -T jupyter printenv WEBUI_ADMIN_EMAIL)"
+webui_password="$(docker compose exec -T jupyter printenv WEBUI_ADMIN_PASSWORD)"
+
 echo
-echo "JupyterLab: http://localhost:8888  (token: JUPYTER_TOKEN in .env)"
-echo "Open WebUI: http://localhost:3000  (login: WEBUI_ADMIN_EMAIL / WEBUI_ADMIN_PASSWORD in .env; model \"Glass Box FDA\")"
+echo "Open WebUI:  http://localhost:3000"
+echo "  login:     ${webui_email}"
+echo "  password:  ${webui_password}"
+echo "  model:     Glass Box FDA"
+echo "JupyterLab:  http://localhost:8888  (token: JUPYTER_TOKEN in .env)"

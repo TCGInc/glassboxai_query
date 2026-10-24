@@ -60,8 +60,8 @@ services:
       EVAL_RUNTIME: ${EVAL_RUNTIME:-strands}
       # agent/openwebui_provision.py configures Open WebUI from agent/ over its API
       OPENWEBUI_URL: http://openwebui:8080
-      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@glassbox.local}
-      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:?set WEBUI_ADMIN_PASSWORD in .env}
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@tcg.com}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:-demo}
     volumes:
       - ./agent:/workspace/agent          # system prompt, skills, tools (single source of truth)
       - ./tests:/workspace/tests
@@ -82,8 +82,8 @@ services:
     environment:
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?set WEBUI_SECRET_KEY in .env}
       # Creates the admin account on first start, so no sign-up page is needed
-      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@glassbox.local}
-      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:?set WEBUI_ADMIN_PASSWORD in .env}
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@tcg.com}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:-demo}
       ENABLE_SIGNUP: "false"
       # Settings come from this file and .env, not from values Open WebUI saved on an earlier
       # start (otherwise an API key added later is ignored). Models, tools and skills are

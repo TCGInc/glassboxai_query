@@ -71,7 +71,7 @@ Three containers via Docker Compose, targeting local Linux or WSL2:
 ### Security posture (demo-grade, but deliberate)
 - Agents use `agent_ro`: `SELECT` only, `default_transaction_read_only = on`, and a `statement_timeout`. The role is the real guardrail. String-checking SQL is a convenience, not a control.
 - The admin DB credentials are used only by Postgres init scripts. They are never exposed to `jupyter` or `openwebui`.
-- All ports are bound to `127.0.0.1`.
+- All ports are bound to `127.0.0.1`. The Open WebUI demo login defaults to `admin@tcg.com` / `demo`, which is acceptable only because of that; set your own in `.env` before sharing the stack.
 - Secrets live in `.env` (gitignored). Never commit keys or `webui.db` files that contain them.
 - Public data only. No customer data, ever.
 - **Known limitation:** system prompts and skills are susceptible to prompt injection and social engineering. Don't overclaim.
