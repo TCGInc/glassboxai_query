@@ -89,6 +89,11 @@ services:
       # start (otherwise an API key added later is ignored). Models, tools and skills are
       # unaffected; they are provisioned from agent/.
       ENABLE_PERSISTENT_CONFIG: "false"
+      # Demo conveniences: new chats start on the Glass Box model (also pinned in the sidebar),
+      # and the model does not generate follow-up suggestions after each answer.
+      DEFAULT_MODELS: glassbox-fda
+      DEFAULT_PINNED_MODELS: glassbox-fda
+      ENABLE_FOLLOW_UP_GENERATION: "false"
       ENABLE_OLLAMA_API: "false"
       # OpenAI and Gemini (via its OpenAI-compatible endpoint), semicolon-separated
       OPENAI_API_BASE_URLS: "https://api.openai.com/v1;https://generativelanguage.googleapis.com/v1beta/openai"

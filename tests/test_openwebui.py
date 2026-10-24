@@ -67,6 +67,20 @@ def test_model_payload_carries_the_prompt_and_nothing_else_tunable():
     assert payload["meta"]["capabilities"] == {"builtin_tools": False}
 
 
+def test_suggested_prompts_are_benchmark_questions():
+    from questions import load_questions
+
+    questions = {q.question for q in load_questions()}
+    prompts = provision.SUGGESTED_PROMPTS
+    assert len(prompts) == 3
+    for prompt in prompts:
+        assert prompt["content"] in questions, (
+            "demo prompts should be regression-tested"
+        )
+        assert len(prompt["title"]) == 2 and all(prompt["title"])
+    assert provision.model_payload("m", [])["meta"]["suggestion_prompts"] == prompts
+
+
 # --- live -------------------------------------------------------------------
 
 
@@ -118,3 +132,11 @@ def test_live_model_matches_agent(webui):
     assert stored["base_model_id"] == expected["base_model_id"]
     for key, value in expected["meta"].items():
         assert stored["meta"][key] == value
+
+
+def test_live_demo_settings(webui):
+    config = webui.request("GET", "/api/v1/tasks/config")
+    assert config["ENABLE_FOLLOW_UP_GENERATION"] is False
+    assert provision.MODEL_ID in (
+        webui.request("GET", "/api/config").get("default_models") or ""
+    )

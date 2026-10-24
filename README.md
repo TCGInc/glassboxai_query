@@ -88,6 +88,8 @@ cp .env.example .env        # add your API key(s) and passwords
 ./start.sh
 ```
 
+For demos, Open WebUI opens new chats on the **Glass Box FDA** model with three suggested prompts and follow-up suggestions turned off. These come from `docker-compose.yml` and `agent/openwebui_provision.py`, so edit them there rather than in the UI (the environment overrides saved UI settings).
+
 `start.sh` converts the FDA workbooks to CSV when needed (in a throwaway Python container, about a minute), then runs `docker compose up -d --build --wait`. `./stop.sh` stops the stack; `./stop.sh --reset` also deletes the database volume.
 
 | Service | URL |
