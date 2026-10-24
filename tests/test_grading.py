@@ -73,9 +73,10 @@ def test_is_correct_by_last_successful_query():
     assert not is_correct([["388"]], False, answer("x", good, bad))
 
 
-def test_is_correct_falls_back_to_the_final_text_for_single_row_gold():
+def test_is_correct_falls_back_to_the_final_text():
     assert is_correct([["388"]], False, answer("There were 388 events."))
-    assert not is_correct([["388"], ["2"]], False, answer("388 and 2"))
+    assert is_correct([["388"], ["2"]], False, answer("388 and 2"))
+    assert not is_correct([["388"], ["2"]], False, answer("Only 388."))
 
 
 def test_asks_clarification():
@@ -125,3 +126,34 @@ def test_signature_groups_equivalent_results():
         "answer", True, answer("", two)
     )
     assert signature("answer", False, answer("no query")) == ("no-result",)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "I can’t calculate the average from this dataset.",  # curly apostrophe
+        "The database does **not** record hospitalization counts.",  # markdown bold
+        "Inspection coverage begins in fiscal year 2009.",
+        "Fiscal year 2005 is outside its coverage.",
+    ],
+)
+def test_admits_unavailable_survives_typography_and_new_phrasings(text):
+    assert admits_unavailable(answer(text))
+
+
+def test_a_bare_zero_is_not_an_admission():
+    assert not admits_unavailable(
+        answer("There were 0 inspections in fiscal year 2005.")
+    )
+
+
+def test_clarification_survives_markdown():
+    assert asks_clarification(answer("Do you mean **fiscal** or *calendar* 2025?"))
+
+
+def test_multi_row_gold_can_be_matched_from_the_final_text():
+    gold = [["Biologics", "8"], ["Devices", "87"]]
+    text = "| Product type | n |\n|---|--:|\n| Biologics | 8 |\n| Devices | 87 |"
+    # Its last query was only a check, so the text carries the answer.
+    assert is_correct(gold, False, answer(text, "| s |\n|---|\n| 95 |\n(1 row)"))
+    assert not is_correct(gold, False, answer("Biologics 8 and Devices 70"))

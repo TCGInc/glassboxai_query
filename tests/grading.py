@@ -28,7 +28,16 @@ _ADMISSIONS = [
     r"\bno (?:data|information|records?)\b",
     r"\b(?:not|isn't|aren't) (?:in|part of) (?:the|this) (?:data|database|dataset)\b",
     r"\b(?:data|dataset|database) (?:begins|starts|only covers|only contains|ends)\b",
+    r"\bcoverage (?:begins|starts|ends)\b",
+    r"\boutside (?:of )?(?:its|the|this) (?:coverage|data|dataset|database|range)\b",
+    r"\bcontains? no \w+ for\b",
 ]
+
+
+def plain(text: str) -> str:
+    """Text with curly quotes straightened and markdown emphasis removed, for matching."""
+    table = str.maketrans({"\u2019": "'", "\u2018": "'", "\u201c": '"', "\u201d": '"'})
+    return text.translate(table).replace("*", "").replace("`", "")
 
 
 def parse_table(result: str) -> list[list[str]] | None:
@@ -85,7 +94,7 @@ def rows_match(gold: list[list[str]], got: list[list[str]], ordered: bool) -> bo
 
 def text_mentions(text: str, row: list[str]) -> bool:
     """Whether every value of a result row appears in the text (numbers by value)."""
-    haystack = re.sub(r"(?<=\d),(?=\d{3}\b)", "", text).casefold()
+    haystack = re.sub(r"(?<=\d),(?=\d{3}\b)", "", plain(text)).casefold()
     numbers = [Decimal(token) for token in re.findall(r"\d+(?:\.\d+)?", haystack)]
     for cell in row:
         value = _number(cell)
@@ -106,20 +115,18 @@ def is_correct(gold: list[list[str]], ordered: bool, answer: Answer) -> bool:
     table = last_table(answer)
     if table is not None and rows_match(gold, table, ordered):
         return True
-    return len(gold) == 1 and text_mentions(answer.text, gold[0])
+    return all(text_mentions(answer.text, row) for row in gold)
 
 
 def asks_clarification(answer: Answer) -> bool:
     """A question back to the user, without a SQL answer."""
-    return "?" in answer.text and not re.search(
-        r"\bselect\b", answer.text, re.IGNORECASE
-    )
+    text = plain(answer.text)
+    return "?" in text and not re.search(r"\bselect\b", text, re.IGNORECASE)
 
 
 def admits_unavailable(answer: Answer) -> bool:
-    return any(
-        re.search(pattern, answer.text, re.IGNORECASE) for pattern in _ADMISSIONS
-    )
+    text = plain(answer.text)
+    return any(re.search(pattern, text, re.IGNORECASE) for pattern in _ADMISSIONS)
 
 
 def grade(

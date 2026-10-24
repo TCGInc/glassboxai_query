@@ -88,11 +88,16 @@ def evaluate(
             result.runs.append(RunRecord(False, "error", "", [], error=repr(error)))
             signatures.append("error")
             continue
-        signature = grading.signature(q.expect, q.ordered, answer)
+        correct = grading.grade(q.expect, gold, q.ordered, answer)
+        # Correct runs agree with each other however they got there (extra columns, a
+        # different but equivalent query); wrong runs are compared by what they said.
+        signature = (
+            ("correct",) if correct else grading.signature(q.expect, q.ordered, answer)
+        )
         signatures.append(signature)
         result.runs.append(
             RunRecord(
-                correct=grading.grade(q.expect, gold, q.ordered, answer),
+                correct=correct,
                 signature=str(signature),
                 answer=answer.text,
                 queries=[{"sql": x.sql, "result": x.result} for x in answer.queries],
