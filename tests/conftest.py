@@ -19,8 +19,10 @@ def pytest_terminal_summary(terminalreporter) -> None:
     terminalreporter.section("agent eval summary")
     for line in evalreport.render(evalreport.RESULTS):
         terminalreporter.write_line(line)
+    runtime = os.environ.get("EVAL_RUNTIME", "strands")
+    terminalreporter.write_line(f"runtime: {runtime}")
     path = evalreport.write_report(
-        evalreport.RESULTS, os.environ.get("LLM_MODEL_ID", "")
+        evalreport.RESULTS, os.environ.get("LLM_MODEL_ID", ""), runtime
     )
     terminalreporter.write_line(f"\nFull report: {path}")
 

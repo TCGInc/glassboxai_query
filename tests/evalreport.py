@@ -63,11 +63,14 @@ def render(results: list[QuestionResult]) -> list[str]:
     return lines
 
 
-def write_report(results: list[QuestionResult], model_id: str) -> Path:
+def write_report(
+    results: list[QuestionResult], model_id: str, runtime: str = "strands"
+) -> Path:
     REPORT_DIR.mkdir(exist_ok=True)
     path = REPORT_DIR / f"{datetime.now():%Y%m%d-%H%M%S}.json"
     payload = {
         "model": model_id,
+        "runtime": runtime,
         "questions": [{**asdict(r), "correctness": r.correctness} for r in results],
     }
     path.write_text(json.dumps(payload, indent=2, default=str))

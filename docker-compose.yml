@@ -57,6 +57,7 @@ services:
       EVAL_MIN_CORRECT: ${EVAL_MIN_CORRECT:-0.8}
       EVAL_QUESTIONS: ${EVAL_QUESTIONS:-}
       EVAL_TIERS: ${EVAL_TIERS:-}
+      EVAL_RUNTIME: ${EVAL_RUNTIME:-strands}
       # agent/openwebui_provision.py configures Open WebUI from agent/ over its API
       OPENWEBUI_URL: http://openwebui:8080
       WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@glassbox.local}
@@ -84,6 +85,10 @@ services:
       WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@glassbox.local}
       WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:?set WEBUI_ADMIN_PASSWORD in .env}
       ENABLE_SIGNUP: "false"
+      # Settings come from this file and .env, not from values Open WebUI saved on an earlier
+      # start (otherwise an API key added later is ignored). Models, tools and skills are
+      # unaffected; they are provisioned from agent/.
+      ENABLE_PERSISTENT_CONFIG: "false"
       ENABLE_OLLAMA_API: "false"
       # OpenAI and Gemini (via its OpenAI-compatible endpoint), semicolon-separated
       OPENAI_API_BASE_URLS: "https://api.openai.com/v1;https://generativelanguage.googleapis.com/v1beta/openai"
