@@ -50,6 +50,7 @@ Design principle: keep the tools simple and assume the model is capable. Planned
 
 ### Hard constraints
 - **Three tools. Two skills. One system prompt.** Do not add tools, skills, retrieval/RAG, or helper agents without explicit approval from the project lead. Simplicity is the point of the demo.
+  - **One exception, for automated tests only:** the system prompt may carry a short, clearly separated addendum that applies only in an automated test environment, for example telling the agent that no one can answer questions, so it should make reasonable assumptions (stating them) and give a single answer, but still never guess. This exists so automated tests get consistent single answers. It must not change the tools, the skills, or the rules about honesty and limits. (Decided by the project lead. Not yet built; see section 9.)
 - **Skills are informational only.** They contain no code and no instructions to call tools.
 - **Use each framework's native skill loading** (Strands and Open WebUI). This has produced consistent results across runtimes so far.
 - **Temperature stays at the model default.** Repeatability comes from conditioning (tone, context, skills), not from sampling settings. The one exception is reasoning effort, set to `none` (`LLM_REASONING_EFFORT`) so the model reasons in visible text rather than hidden reasoning tokens, which suits the Glass Box goal. It is applied identically in both runtimes.
@@ -168,4 +169,5 @@ docker compose exec jupyter pytest -m agent         # agent evals (uses tokens)
 ---
 
 ## 9. Open decisions
+- Automated-test addendum to the system prompt (section 2). If built, ambiguous-tier questions would be graded differently in that mode: the agent passes by stating its assumption and answering, instead of asking. The interactive mode, which is what the demo uses, is unchanged.
 - Matching rule for free-text final answers: how to extract a scalar or result set from prose (the normalization rules are in section 5).
