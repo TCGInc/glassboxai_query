@@ -120,6 +120,9 @@ The benchmark reports, per question and overall:
 - **Correctness:** did the agent's answer match the verified answer?
 - **Consistency:** how often did repeated runs agree with each other?
 - **Clarification behavior:** for intentionally ambiguous questions, did the agent ask instead of guessing?
+- **Honesty about limits:** for questions the data cannot answer, did the agent say so instead of inventing an answer?
+
+Verified answers are not stored. Each question carries a gold SQL query that is run at test time, so the tests stay valid when the FDA data is refreshed.
 
 ---
 
@@ -143,7 +146,7 @@ jupyter/
 notebooks/
   demo.ipynb
 tests/
-  questions.yaml        # NL question + gold SQL + expected answer
+  questions.yaml        # NL question + gold SQL (answers computed at test time)
   test_tools.py
   test_agent_evals.py
 openwebui/

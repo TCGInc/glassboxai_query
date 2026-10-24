@@ -85,7 +85,7 @@ Three containers via Docker Compose, targeting local Linux or WSL2:
 - A few related tables with real joins.
 - Loads in minutes.
 - Small enough to version the cleaned CSVs or a reproducible download script.
-- Keep a frozen snapshot so gold answers don't drift when FDA refreshes its data.
+- Keep the downloaded workbooks in git as the frozen snapshot, and record the download date in the README. Gold answers are computed from gold SQL (section 5), so refreshing the data does not require re-keying expected values.
 
 ---
 
@@ -97,25 +97,29 @@ Tests are `.py` files under `tests/` (not notebooks). The notebook is a demo sur
 - `run_query` rejects non-`SELECT` statements and respects the row cap.
 - The `agent_ro` role cannot write, and the timeout fires.
 - The plan tools behave correctly (ordering, completion, edge cases).
-- Every gold SQL in `questions.yaml` returns its expected answer against the frozen snapshot.
+- Every gold SQL in `questions.yaml` runs as `agent_ro` within the timeout and returns the declared shape (column count, plausible row count, non-empty unless `shape` says otherwise). Gold answers are not hard-coded: the harness computes them from `gold_sql`, so tests hold up when the underlying data is refreshed. Hand-verify each gold query once when authoring it, and say how in `notes`.
 
 ### Tier 2: agent evals (`pytest -m agent`), slow and costs tokens
 - Each question runs **N times** (default 3–5, configurable).
-- **Correctness:** grade on the *result*, not the SQL text. Compare the agent's final answer (or its last query's result set) against the gold SQL result.
+- **Correctness:** grade on the *result*, not the SQL text. Run the gold SQL at test time and compare the agent's final answer (or its last query's result set) against that result. Normalize before comparing: unordered unless the gold SQL has an `ORDER BY`, small numeric tolerance, column names ignored.
 - **Consistency:** the fraction of runs that agree with each other. Report both metrics per question and in aggregate.
-- **Ambiguity questions:** some questions are intentionally ambiguous. A correct response asks for clarification instead of answering.
+- **Ambiguity questions (`ambiguous` tier):** some questions are intentionally ambiguous. A correct response asks for clarification instead of answering.
+- **Unanswerable questions (`unanswerable` tier):** some questions ask for something the dataset does not contain (for example, an attribute no table has, or a period outside the coverage). A correct response says plainly that the data cannot answer it, ideally noting what is available instead. It must not invent an answer or silently substitute a different measure. These questions have no `gold_sql`.
+- Pin time frames to explicit fiscal years in answerable questions. "Last year" belongs in the `ambiguous` tier.
 - **Parity (planned):** run the same suite against Open WebUI's OpenAI-compatible chat API, so cross-runtime consistency is measured rather than assumed.
 
 ### `tests/questions.yaml` schema (draft)
 ```yaml
 - id: q001
-  tier: easy            # easy | medium | hard | ambiguous
-  question: "How many Class I recalls were initiated in fiscal year 2025?"
-  gold_sql: |
+  tier: easy            # easy | medium | hard | ambiguous | unanswerable
+  expect: answer        # answer | clarify | unavailable (ambiguous -> clarify, unanswerable -> unavailable)
+  question: "How many Class I recall events were classified in fiscal year 2025?"
+  gold_sql: |           # required when expect: answer; omitted otherwise
     SELECT COUNT(*) FROM ...
-  expected: 123         # scalar or small result set
-  expect_clarification: false
-  notes: "Fiscal year runs Oct 1 - Sep 30."
+  shape:                # optional sanity bounds checked by Tier 1
+    columns: 1
+    min_rows: 1
+  notes: "Fiscal year runs Oct 1 - Sep 30. Verified by hand against ..."
 ```
 
 Start with ~10 questions across the tiers and grow toward ~20.
@@ -161,4 +165,4 @@ docker compose down -v            # full reset, including reloading the DB
 ## 9. Open decisions
 - Final dataset and subset (see section 4).
 - Precise signatures for `create_plan` / `next_step` (mirror the proven design).
-- Grading rule for free-text final answers (exact scalar vs. tolerance vs. result-set match).
+- Matching rule for free-text final answers: how to extract a scalar or result set from prose (the normalization rules are in section 5).
