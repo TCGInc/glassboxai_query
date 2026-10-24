@@ -203,3 +203,98 @@
   expect: unavailable
   question: "How many people were hospitalized because of recalled food products in 2024?"
   notes: "No injury, illness, or hospitalization data."
+
+# --- skill-resolved: wording that looks ambiguous until the skills' domain knowledge is applied ---
+# Each notes which skill default settles it. Ablation (tests/ablate.py) showed the model reaches the same
+# answers without the skills on this small, clean database, so these are regression tests for the defaults,
+# not proof that the skills are needed.
+
+- id: q021
+  tier: medium
+  expect: answer
+  question: "How many recalls were classified as Class I in fiscal year 2025?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.recall_events
+    WHERE event_classification = 'Class I'
+      AND center_classification_date BETWEEN '2024-10-01' AND '2025-09-30'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Terminology skill: 'recalls' means recall events, not recalled products (which would give a much larger number)."
+
+- id: q022
+  tier: medium
+  expect: answer
+  question: "How many inspections had an OAI outcome in fiscal year 2025?"
+  gold_sql: |
+    SELECT COUNT(DISTINCT i.inspection_id)
+    FROM fda.inspections i JOIN fda.inspection_details d USING (inspection_id)
+    WHERE i.fiscal_year = 2025 AND d.classification = 'Official Action Indicated (OAI)'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Terminology skill: 'inspections' means distinct inspections with at least one such result, not result rows (736)."
+
+- id: q023
+  tier: medium
+  expect: answer
+  question: "How many food recalls were classified in fiscal year 2025?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.recall_events
+    WHERE product_type = 'Food/Cosmetics'
+      AND center_classification_date BETWEEN '2024-10-01' AND '2025-09-30'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Terminology skill: food recalls span the CFSAN, HFP and OCS centers (CFSAN alone would give a smaller number). Cross-checked by filtering on center instead."
+
+- id: q024
+  tier: medium
+  expect: answer
+  question: "How many of the most serious recalls were classified in fiscal year 2024?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.recall_events
+    WHERE event_classification = 'Class I'
+      AND center_classification_date BETWEEN '2023-10-01' AND '2024-09-30'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Terminology skill: 'most serious' recalls means Class I; 'recalls' means events."
+
+- id: q025
+  tier: medium
+  expect: answer
+  question: "How many Class I recall events were classified in 2024?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.recall_events
+    WHERE event_classification = 'Class I'
+      AND center_classification_date BETWEEN '2024-01-01' AND '2024-12-31'
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Terminology skill: a bare year without 'fiscal' means calendar year (fiscal 2024 would give a different number). Cross-checked with EXTRACT(YEAR ...)."
+
+# --- skill-dependent: the right answer needs knowledge the data cannot reveal by itself ---
+# Checked with tests/ablate.py (skills removed), 3 runs: q026 and q028 stayed at 100% because the model
+# finds the placeholder and the coverage limit by exploring the data; q027 fell to 67% (the join trap).
+# So for this model and database the skills mostly buy consistency, not correctness.
+
+- id: q026
+  tier: hard
+  expect: answer
+  question: "Which state had the most inspections in fiscal year 2025?"
+  gold_sql: |
+    SELECT state FROM fda.inspections
+    WHERE fiscal_year = 2025 AND state <> '-'
+    GROUP BY state ORDER BY COUNT(*) DESC LIMIT 1
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Database skill: '-' is a placeholder for non-U.S. locations, not a state. It has the largest count (2,614), ahead of the real leader."
+
+- id: q027
+  tier: hard
+  expect: answer
+  question: "How many citations were recorded for fiscal year 2025 inspections that had an OAI result?"
+  gold_sql: |
+    SELECT COUNT(*) FROM fda.citations
+    WHERE inspection_id IN (
+      SELECT i.inspection_id
+      FROM fda.inspections i JOIN fda.inspection_details d USING (inspection_id)
+      WHERE i.fiscal_year = 2025 AND d.classification = 'Official Action Indicated (OAI)')
+  shape: {columns: 1, min_rows: 1, max_rows: 1}
+  notes: "Database skill: joining details to citations multiplies rows (an inspection can have several OAI results), so the inspections must be selected first. A direct three-way join overcounts."
+
+- id: q028
+  tier: unanswerable
+  expect: unavailable
+  question: "How many Class I recalls were classified in fiscal year 2011?"
+  notes: "Database skill: recall classification dates start on 2012-06-08, so fiscal year 2011 is not covered. A bare 0 would be wrong."
