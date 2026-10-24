@@ -23,7 +23,7 @@ import re
 import urllib.error
 import urllib.request
 
-from agent import tools
+from agent import settings, tools
 from agent.strands_agent import SKILLS_DIR, SYSTEM_PROMPT_PATH
 
 TOOL_ID = "glassbox_fda"
@@ -92,7 +92,8 @@ def skill_payloads() -> list[dict]:
 
 
 def model_payload(base_model_id: str, skill_ids: list[str]) -> dict:
-    """The agent as an Open WebUI model. Sampling parameters stay at the model default."""
+    """The agent as an Open WebUI model. Only the system prompt and reasoning effort are set."""
+    effort = settings.reasoning_effort()
     return {
         "id": MODEL_ID,
         "name": MODEL_NAME,
@@ -104,7 +105,10 @@ def model_payload(base_model_id: str, skill_ids: list[str]) -> dict:
             # Off: Open WebUI's own tools (time, memory, knowledge, skills loader, ...).
             "capabilities": {"builtin_tools": False},
         },
-        "params": {"system": SYSTEM_PROMPT_PATH.read_text()},
+        "params": {
+            "system": SYSTEM_PROMPT_PATH.read_text(),
+            **({"reasoning_effort": effort} if effort else {}),
+        },
         "is_active": True,
     }
 

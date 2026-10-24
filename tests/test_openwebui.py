@@ -56,9 +56,11 @@ def test_skill_payloads_are_the_skill_files():
 
 def test_model_payload_carries_the_prompt_and_nothing_else_tunable():
     payload = provision.model_payload("some-model", ["database", "terminology"])
+    # No sampling settings: only the prompt and the shared reasoning effort.
     assert payload["params"] == {
-        "system": SYSTEM_PROMPT_PATH.read_text()
-    }  # default temperature
+        "system": SYSTEM_PROMPT_PATH.read_text(),
+        "reasoning_effort": "none",
+    }
     assert payload["base_model_id"] == "some-model"
     assert payload["meta"]["toolIds"] == [provision.TOOL_ID]
     assert payload["meta"]["skillIds"] == ["database", "terminology"]

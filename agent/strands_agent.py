@@ -18,7 +18,7 @@ from strands.models.gemini import GeminiModel
 from strands.models.openai import OpenAIModel
 from strands.vended_plugins.skills import AgentSkills
 
-from agent import tools
+from agent import settings, tools
 
 AGENT_DIR = Path(__file__).parent
 SYSTEM_PROMPT_PATH = AGENT_DIR / "system_prompt.md"
@@ -53,8 +53,11 @@ def build_model(model_id: str | None = None) -> Model:
         return GeminiModel(
             client_args={"api_key": os.environ["GEMINI_API_KEY"]}, model_id=model_id
         )
+    effort = settings.reasoning_effort()
     return OpenAIModel(
-        client_args={"api_key": os.environ["OPENAI_API_KEY"]}, model_id=model_id
+        client_args={"api_key": os.environ["OPENAI_API_KEY"]},
+        model_id=model_id,
+        params={"reasoning_effort": effort} if effort else None,
     )
 
 

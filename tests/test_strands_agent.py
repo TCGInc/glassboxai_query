@@ -98,3 +98,19 @@ def test_each_built_agent_starts_without_a_plan():
         if "toolResult" in block
     )
     assert result.startswith("Error: there is no plan yet")
+
+
+def test_reasoning_effort_is_none_by_default_and_can_be_cleared(monkeypatch):
+    from agent.strands_agent import build_model
+
+    monkeypatch.setenv("OPENAI_API_KEY", "unused")
+    monkeypatch.delenv("LLM_REASONING_EFFORT", raising=False)
+    assert build_model("some-openai-model").get_config()["params"] == {
+        "reasoning_effort": "none"
+    }
+    monkeypatch.setenv("LLM_REASONING_EFFORT", "")
+    assert not build_model("some-openai-model").get_config().get("params")
+    monkeypatch.setenv("LLM_REASONING_EFFORT", "low")
+    assert build_model("some-openai-model").get_config()["params"] == {
+        "reasoning_effort": "low"
+    }

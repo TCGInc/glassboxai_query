@@ -49,6 +49,8 @@ services:
       # Agent connects ONLY as the read-only role
       FDA_DATABASE_URL: postgresql://${AGENT_RO_USER:-agent_ro}:${AGENT_RO_PASSWORD}@postgres:5432/${POSTGRES_DB:-fda}
       LLM_MODEL_ID: ${LLM_MODEL_ID:-gpt-6-luna}
+      # Unset = none (visible reasoning); set empty to use the provider default
+      LLM_REASONING_EFFORT: ${LLM_REASONING_EFFORT-none}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       EVAL_RUNS: ${EVAL_RUNS:-5}

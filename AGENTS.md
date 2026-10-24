@@ -52,7 +52,7 @@ Design principle: keep the tools simple and assume the model is capable. Planned
 - **Three tools. Two skills. One system prompt.** Do not add tools, skills, retrieval/RAG, or helper agents without explicit approval from the project lead. Simplicity is the point of the demo.
 - **Skills are informational only.** They contain no code and no instructions to call tools.
 - **Use each framework's native skill loading** (Strands and Open WebUI). This has produced consistent results across runtimes so far.
-- **Temperature stays at the model default.** Repeatability comes from conditioning (tone, context, skills), not from sampling settings.
+- **Temperature stays at the model default.** Repeatability comes from conditioning (tone, context, skills), not from sampling settings. The one exception is reasoning effort, set to `none` (`LLM_REASONING_EFFORT`) so the model reasons in visible text rather than hidden reasoning tokens, which suits the Glass Box goal. It is applied identically in both runtimes.
 - **Single source of truth:** the system prompt, skills, and tool behavior live in `agent/`. The Open WebUI configuration must match them exactly. Any change in one runtime must be mirrored in the other in the same PR.
 
 ---
