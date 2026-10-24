@@ -36,7 +36,7 @@ This demo follows an analysis-assistant pattern TCG built for a federal financia
 
 | Component | Definition |
 |---|---|
-| **LLM** | Set via `LLM_MODEL_ID` in `.env`. Provider-agnostic (OpenAI or Gemini). Starting model: a low-cost OpenAI "Luna" tier (confirm exact ID). |
+| **LLM** | Set via `LLM_MODEL_ID` in `.env`. Initial target: OpenAI GPT-6 Luna (`gpt-6-luna`). If the agentic environment has reliability problems, evaluate GPT-5.6 Luna or a Sol tier. |
 | **System prompt** | Professional, context-rich. Instructs the model to say plainly when a question is ambiguous or the data can't answer it, and to **ask the user for clarification rather than guess**. |
 | **Skill 1: database** | Informational doc: what the dataset is, tables, keys, joins, coverage limits, known data-quality gotchas. |
 | **Skill 2: terminology** | Informational doc: analyst/regulatory vocabulary mapped to columns and coded values. |
@@ -160,6 +160,5 @@ docker compose down -v            # full reset, including reloading the DB
 
 ## 9. Open decisions
 - Final dataset and subset (see section 4).
-- Exact model ID (`gpt-6-luna` vs. `gpt-5.6-luna`).
 - Precise signatures for `create_plan` / `next_step` (mirror the proven design).
 - Grading rule for free-text final answers (exact scalar vs. tolerance vs. result-set match).
