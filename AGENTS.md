@@ -110,7 +110,7 @@ Tests are `.py` files under `tests/` (not notebooks). The notebook is a demo sur
 - **Ambiguity questions (`ambiguous` tier):** some questions are intentionally ambiguous. A correct response asks for clarification instead of answering.
 - **Unanswerable questions (`unanswerable` tier):** some questions ask for something the dataset does not contain (for example, an attribute no table has, or a period outside the coverage). A correct response says plainly that the data cannot answer it, ideally noting what is available instead. It must not invent an answer or silently substitute a different measure. These questions have no `gold_sql`.
 - Pin time frames to explicit fiscal years in answerable questions. "Last year" belongs in the `ambiguous` tier.
-- **Parity (planned):** run the same suite against Open WebUI's OpenAI-compatible chat API, so cross-runtime consistency is measured rather than assumed.
+- **Parity:** `EVAL_RUNTIME=openwebui pytest -m agent` runs the same suite through Open WebUI, so cross-runtime consistency is measured rather than assumed. It must drive Open WebUI the way its chat UI does (saved chat plus session): a bare API call does not execute tools server-side, and the model then has no way to query and may invent a number. `tests/openwebui_runtime.py` does this.
 
 ### `tests/questions.yaml` schema (draft)
 ```yaml

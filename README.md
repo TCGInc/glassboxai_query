@@ -124,6 +124,9 @@ docker compose exec jupyter pytest -m agent
 # Just some questions or tiers (comma-separated), fewer runs
 docker compose exec -e EVAL_QUESTIONS=q001,q014 -e EVAL_RUNS=3 jupyter pytest -m agent
 docker compose exec -e EVAL_TIERS=ambiguous,unanswerable jupyter pytest -m agent
+
+# The same suite through Open WebUI, to measure cross-runtime parity
+docker compose exec -e EVAL_RUNTIME=openwebui jupyter pytest -m agent
 ```
 
 Each benchmark run prints a per-question and per-tier summary and saves every run's final answer and queries to `tests/reports/` (gitignored) so you can inspect the agent's work.
@@ -184,7 +187,7 @@ AGENTS.md               # context for AI coding assistants and contributors
 - [x] Implement the three tools and deterministic tests
 - [ ] Build the Strands agent; reach consistent benchmark results (wired and tested with a scripted model; needs live runs)
 - [x] Replicate the agent in Open WebUI (provisioned from `agent/` by `start.sh`; needs a live check with an API key)
-- [ ] Automated cross-runtime parity check
+- [x] Automated cross-runtime parity check (`EVAL_RUNTIME=openwebui`)
 
 ---
 
