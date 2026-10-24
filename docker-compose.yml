@@ -55,6 +55,10 @@ services:
       EVAL_MIN_CORRECT: ${EVAL_MIN_CORRECT:-0.8}
       EVAL_QUESTIONS: ${EVAL_QUESTIONS:-}
       EVAL_TIERS: ${EVAL_TIERS:-}
+      # agent/openwebui_provision.py configures Open WebUI from agent/ over its API
+      OPENWEBUI_URL: http://openwebui:8080
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@glassbox.local}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:?set WEBUI_ADMIN_PASSWORD in .env}
     volumes:
       - ./agent:/workspace/agent          # system prompt, skills, tools (single source of truth)
       - ./tests:/workspace/tests
@@ -74,6 +78,10 @@ services:
         condition: service_healthy
     environment:
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?set WEBUI_SECRET_KEY in .env}
+      # Creates the admin account on first start, so no sign-up page is needed
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@glassbox.local}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:?set WEBUI_ADMIN_PASSWORD in .env}
+      ENABLE_SIGNUP: "false"
       ENABLE_OLLAMA_API: "false"
       # OpenAI and Gemini (via its OpenAI-compatible endpoint), semicolon-separated
       OPENAI_API_BASE_URLS: "https://api.openai.com/v1;https://generativelanguage.googleapis.com/v1beta/openai"
@@ -85,6 +93,8 @@ services:
       # Bind mount so webui.db (prompt, skills, tools config) can be copied out and reused.
       # Gitignored: it can contain API keys. Scrub before sharing.
       - ./openwebui/data:/app/backend/data
+      # The tool Open WebUI runs imports agent/tools.py, so both runtimes share one implementation
+      - ./agent:/opt/glassbox/agent:ro
     ports:
       - "127.0.0.1:3000:8080"
 

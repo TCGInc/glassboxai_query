@@ -27,6 +27,10 @@ fi
 export HOST_UID="$(id -u)" HOST_GID="$(id -g)"
 docker compose up -d --build --wait --wait-timeout 900
 
+# Configure Open WebUI from agent/ (idempotent). A failure here should not hide that the stack is up.
+docker compose exec -T jupyter python -m agent.openwebui_provision \
+  || echo "Warning: Open WebUI was not configured; rerun: docker compose exec jupyter python -m agent.openwebui_provision" >&2
+
 echo
 echo "JupyterLab: http://localhost:8888  (token: JUPYTER_TOKEN in .env)"
-echo "Open WebUI: http://localhost:3000"
+echo "Open WebUI: http://localhost:3000  (login: WEBUI_ADMIN_EMAIL / WEBUI_ADMIN_PASSWORD in .env; model \"Glass Box FDA\")"

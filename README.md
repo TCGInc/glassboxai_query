@@ -93,7 +93,7 @@ cp .env.example .env        # add your API key(s) and passwords
 | Service | URL |
 |---|---|
 | JupyterLab | http://localhost:8888 (token from `JUPYTER_TOKEN`) |
-| Open WebUI | http://localhost:3000 |
+| Open WebUI | http://localhost:3000 (log in with `WEBUI_ADMIN_EMAIL` / `WEBUI_ADMIN_PASSWORD`, then choose the **Glass Box FDA** model) |
 | PostgreSQL | localhost:5432 (admin only; the agents use the read-only role) |
 
 The first start loads the dataset into Postgres (under a minute once the CSVs exist). To reload from scratch, run `./stop.sh --reset`.
@@ -107,6 +107,7 @@ The first start loads the dataset into Postgres (under a minute once the CSVs ex
 | `POSTGRES_PASSWORD` | Admin password (init scripts only) |
 | `AGENT_RO_PASSWORD` | Password for the agents' read-only role |
 | `JUPYTER_TOKEN` | JupyterLab access token |
+| `WEBUI_ADMIN_EMAIL` / `WEBUI_ADMIN_PASSWORD` | Open WebUI admin login, created on first start |
 | `WEBUI_SECRET_KEY` | Open WebUI session secret |
 
 ---
@@ -152,6 +153,7 @@ agent/
     terminology/SKILL.md
   tools.py              # run_query, create_plan, complete_step
   strands_agent.py      # wires the above into AWS Strands
+  openwebui_provision.py   # configures Open WebUI from the above (run by start.sh)
 db/
   init/                 # roles, schema, data load (runs on first start)
 data/
@@ -167,6 +169,7 @@ tests/
   test_tools.py         # tools and agent_ro role (Tier 1)
   test_questions.py     # every gold query runs (Tier 1)
   test_agent_evals.py   # the benchmark (Tier 2)
+  test_openwebui.py     # Open WebUI configuration matches agent/ (Tier 1)
   grading.py, evalreport.py, questions.py, fake_model.py   # helpers
 openwebui/
   data/                 # Open WebUI state (webui.db), gitignored
@@ -180,7 +183,7 @@ AGENTS.md               # context for AI coding assistants and contributors
 - [x] Write the system prompt and the two skills (first draft; needs tuning against real runs)
 - [x] Implement the three tools and deterministic tests
 - [ ] Build the Strands agent; reach consistent benchmark results (wired and tested with a scripted model; needs live runs)
-- [ ] Replicate the agent in Open WebUI
+- [x] Replicate the agent in Open WebUI (provisioned from `agent/` by `start.sh`; needs a live check with an API key)
 - [ ] Automated cross-runtime parity check
 
 ---

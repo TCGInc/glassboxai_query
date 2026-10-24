@@ -44,7 +44,7 @@ This demo follows an analysis-assistant pattern TCG built for a federal financia
 | **Tool 2: `create_plan(steps: str)`** | The model records a multi-step plan, one step per line. The plan lives in a module-level variable, so a new plan replaces the old one. Returns the plan rendered with numbered lines, a status, and notes. |
 | **Tool 3: `complete_step(step: int, note: str = "")`** | Marks a step done, with an optional note, and returns the re-rendered plan. |
 
-Native skill loading adds one loader tool of its own in each runtime (Strands' `skills`; Open WebUI's `view_skill`). That is expected: "three tools" counts the tools we write. Parity tests should compare what each runtime actually exposes to the model.
+Skill loading differs slightly by runtime, and that is documented rather than hidden. Strands' native loader (`AgentSkills`) lists each skill's name and description in the prompt and adds a `skills` tool the model calls to read one. Open WebUI's native behavior for skills attached to a model is to inject their full text, and its own built-in tools (including its `view_skill` loader) are switched off for the Glass Box model, so the model sees exactly our three tools. "Three tools" counts the tools we write. The skill text is identical in both; `tests/test_openwebui.py` checks that.
 
 Design principle: keep the tools simple and assume the model is capable. Planned but not built: saving large query results to disk and processing them outside the context.
 
@@ -136,7 +136,7 @@ Tests are `.py` files under `tests/` (not notebooks). The notebook is a demo sur
 2. Write the two skills and the system prompt.
 3. Implement the three tools and the Tier 1 tests.
 4. Build the Strands agent in Jupyter. Write `questions.yaml`. Get the Tier 2 evals passing consistently.
-5. Replicate in Open WebUI. Configuration may be done manually in the UI, then `webui.db` is exported for reuse (scrubbed of secrets).
+5. Replicate in Open WebUI. Done by `agent/openwebui_provision.py` (run by `start.sh`), which builds the tool, skills and model from `agent/` over Open WebUI's API, so there is no hand-configured state to drift. This replaces the earlier idea of exporting `webui.db`. Change `agent/`, rerun the provisioner, and `tests/test_openwebui.py` confirms the two match.
 6. Add the automated parity run.
 
 Iterate in small steps. Prefer working, verified increments over large changes.
