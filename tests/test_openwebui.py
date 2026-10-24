@@ -140,3 +140,12 @@ def test_live_demo_settings(webui):
     assert provision.MODEL_ID in (
         webui.request("GET", "/api/config").get("default_models") or ""
     )
+
+
+def test_live_model_picker_is_short_and_includes_the_base_model(webui):
+    ids = [m["id"] for m in webui.request("GET", "/api/models")["data"]]
+    assert provision.MODEL_ID in ids
+    assert os.environ["LLM_MODEL_ID"] in ids, (
+        "LLM_MODEL_ID must be in OPENAI_API_CONFIGS"
+    )
+    assert len(ids) <= 12, f"model picker should be short for demos, found {len(ids)}"

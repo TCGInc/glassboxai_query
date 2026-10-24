@@ -98,6 +98,10 @@ services:
       # OpenAI and Gemini (via its OpenAI-compatible endpoint), semicolon-separated
       OPENAI_API_BASE_URLS: "https://api.openai.com/v1;https://generativelanguage.googleapis.com/v1beta/openai"
       OPENAI_API_KEYS: "${OPENAI_API_KEY:-};${GEMINI_API_KEY:-}"
+      # Demo: show only the Luna / Terra / Sol tiers next to Glass Box FDA, so "what can the model
+      # do by itself?" can be answered without a 100-model picker. "0" is the OpenAI connection
+      # above; LLM_MODEL_ID must be in this list. Edit the list to show other models.
+      OPENAI_API_CONFIGS: '{"0": {"model_ids": ["gpt-6-luna", "gpt-6-sol", "gpt-6.1-sol", "gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"]}}'
       # Read by the run_query tool code; same read-only role as Strands.
       # Not DATABASE_URL: Open WebUI reads that name for its own app database.
       FDA_DATABASE_URL: postgresql://${AGENT_RO_USER:-agent_ro}:${AGENT_RO_PASSWORD}@postgres:5432/${POSTGRES_DB:-fda}
