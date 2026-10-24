@@ -64,14 +64,17 @@ And one more: **the same agent behaves the same way in two different runtimes.**
 
 ## The data
 
-> **Status: dataset selection in progress.**
+Public data from the [FDA Data Dashboard](https://datadashboard.fda.gov/oii/cd/): three exports loaded into five PostgreSQL tables.
 
-We are evaluating FDA public datasets:
+| Table | One row per |
+|---|---|
+| `fda.inspections` | inspection |
+| `fda.inspection_details` | inspection classification / project area result |
+| `fda.citations` | inspection citation (FDA Form 483 observation) |
+| `fda.recall_events` | recall event |
+| `fda.recalled_products` | recalled product |
 
-- **FDA compliance data** (leading candidate): inspections, compliance actions (warning letters, seizures, injunctions), and recalls from the FDA Data Dashboard.
-- **Drugs@FDA** (fallback): drug applications, products, and submission history.
-
-The chosen subset will be frozen as a snapshot so benchmark answers stay stable when FDA refreshes its data.
+The downloaded workbooks are committed in `data/raw/` as the frozen snapshot (downloaded October 2026: inspections end 2026-10-14 and recall classifications end 2026-10-16, so fiscal year 2027 is just two weeks old). The CSVs and the database are generated from them. See [`DATA_IMPORT.md`](DATA_IMPORT.md) for table grains, join cautions, and how to refresh the data.
 
 ---
 
@@ -80,10 +83,12 @@ The chosen subset will be frozen as a snapshot so benchmark answers stay stable 
 **Prerequisites:** Docker with Compose v2 on Linux or WSL2, plus an OpenAI and/or Gemini API key.
 
 ```bash
-git clone <this-repo> && cd <this-repo>
+git clone https://github.com/TCGInc/glassboxai_query.git && cd glassboxai_query
 cp .env.example .env        # add your API key(s) and passwords
-docker compose up -d --build
+./start.sh
 ```
+
+`start.sh` converts the FDA workbooks to CSV when needed (in a throwaway Python container, about a minute), then runs `docker compose up -d --build --wait`. `./stop.sh` stops the stack; `./stop.sh --reset` also deletes the database volume.
 
 | Service | URL |
 |---|---|
@@ -91,7 +96,7 @@ docker compose up -d --build
 | Open WebUI | http://localhost:3000 |
 | PostgreSQL | localhost:5432 (admin only; the agents use the read-only role) |
 
-The first start loads the dataset into Postgres. To reload from scratch, run `docker compose down -v`.
+The first start loads the dataset into Postgres (under a minute once the CSVs exist). To reload from scratch, run `./stop.sh --reset`.
 
 ### Key environment variables
 
@@ -130,7 +135,10 @@ Verified answers are not stored. Each question carries a gold SQL query that is 
 
 ```
 docker-compose.yml
+start.sh / stop.sh      # start the stack (converting data first if needed) / stop it
 .env.example
+scripts/
+  convert_fda_workbooks.py   # data/raw/*.xlsx -> data/*.csv
 agent/
   system_prompt.md
   skills/
@@ -139,7 +147,9 @@ agent/
   tools.py              # run_query, create_plan, next_step
 db/
   init/                 # roles, schema, data load (runs on first start)
-data/                   # cleaned CSV snapshot (or download script)
+data/
+  raw/                  # downloaded FDA workbooks (the frozen snapshot, committed)
+                        # generated CSVs also land in data/ (gitignored)
 jupyter/
   Dockerfile
   requirements.txt
@@ -157,7 +167,7 @@ AGENTS.md               # context for AI coding assistants and contributors
 ---
 
 ## Roadmap
-- [ ] Select and profile the dataset; build the loader and frozen snapshot
+- [x] Select and profile the dataset; build the loader and frozen snapshot
 - [ ] Write the system prompt and the two skills
 - [ ] Implement the three tools and deterministic tests
 - [ ] Build the Strands agent; reach consistent benchmark results

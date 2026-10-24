@@ -75,11 +75,11 @@ Three containers via Docker Compose, targeting local Linux or WSL2:
 
 ## 4. Dataset
 
-**Status: not final.**
+**Status: chosen and loaded.**
 - USAspending is **excluded** (already used elsewhere).
-- **Leading candidate:** FDA compliance data from the FDA Data Dashboard (inspections, compliance actions, recalls). It has strong public-sector appeal, clean categorical fields, and rich terminology (recall classes, inspection classifications, fiscal years).
-- **Fallback:** Drugs@FDA (12 tab-delimited relational tables with a published ERD). It's the cleanest option for unit tests.
-- **First task:** download candidate exports, profile them, and confirm the join keys (e.g., FEI number), row counts, and date fields. Report findings before building the loader.
+- **Dataset:** three FDA Data Dashboard exports (inspections, citations, recalls), loaded into five tables in the `fda` schema. Table grains, keys, and join cautions are in `DATA_IMPORT.md`. Compliance actions (warning letters, seizures, injunctions) are not included.
+- **Known coverage limits to put in the database skill:** inspections span FY 2009 through FY 2027 (end dates 2008-10-01 to 2026-10-14), and FY 2027 holds only its first two weeks; recall classification dates run 2012-06-08 to 2026-10-16; recall rows carry a classification date but no initiation date; `FEI Number` identifies a firm, not a specific inspection-to-recall relationship; the exports are finalized, posted records and FDA says they are not comprehensive.
+- Drugs@FDA remains a fallback if this dataset proves unsuitable.
 
 ### Subset guidelines
 - A few related tables with real joins.
@@ -153,16 +153,16 @@ Iterate in small steps. Prefer working, verified increments over large changes.
 
 ```bash
 cp .env.example .env              # then fill in keys
-docker compose up -d --build      # start the stack
+./start.sh                        # convert data if needed, start the stack
 docker compose logs -f postgres   # watch the initial data load
 docker compose exec jupyter pytest -m "not agent"   # fast tests
 docker compose exec jupyter pytest -m agent         # agent evals (uses tokens)
-docker compose down -v            # full reset, including reloading the DB
+./stop.sh                         # stop the stack
+./stop.sh --reset                 # full reset, including reloading the DB
 ```
 
 ---
 
 ## 9. Open decisions
-- Final dataset and subset (see section 4).
 - Precise signatures for `create_plan` / `next_step` (mirror the proven design).
 - Matching rule for free-text final answers: how to extract a scalar or result set from prose (the normalization rules are in section 5).

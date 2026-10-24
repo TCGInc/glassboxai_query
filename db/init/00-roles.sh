@@ -16,6 +16,8 @@ CREATE ROLE :"agent_ro_user"
 
 ALTER ROLE :"agent_ro_user" SET default_transaction_read_only = on;
 ALTER ROLE :"agent_ro_user" SET statement_timeout = '30s';
+ALTER ROLE :"agent_ro_user" SET lock_timeout = '10s';
+ALTER ROLE :"agent_ro_user" SET idle_in_transaction_session_timeout = '60s';
 ALTER ROLE :"agent_ro_user" SET search_path = fda, public;
 
 GRANT CONNECT ON DATABASE :"database_name" TO :"agent_ro_user";
