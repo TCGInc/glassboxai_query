@@ -37,22 +37,35 @@ fi
 
 export HOST_UID="$(id -u)" HOST_GID="$(id -g)"
 
-# LibreChat reads its configuration at startup, so write it from agent/ first.
+# LibreChat reads its configuration at startup, so write it from agent/ first, and restart a
+# running LibreChat if the configuration changed.
+config=librechat/librechat.yaml
+before="$(cat "$config" 2>/dev/null || true)"
 docker compose build --quiet jupyter
 docker compose run --rm --no-deps -T jupyter python -m agent.librechat_config
 
 docker compose up -d --wait --wait-timeout 900
+if [[ -n "$before" && "$before" != "$(cat "$config")" ]]; then
+  echo "LibreChat configuration changed; restarting LibreChat..."
+  docker compose restart librechat
+  docker compose up -d --wait --wait-timeout 300 librechat
+fi
 
 # Read the effective values from the container, so compose defaults show up too.
 admin_email="$(docker compose exec -T jupyter printenv ADMIN_EMAIL)"
 admin_password="$(docker compose exec -T jupyter printenv ADMIN_PASSWORD)"
 
 # The demo admin (the first LibreChat user is its administrator). Rerunning is harmless.
-if ! docker compose exec -T librechat npm run --silent list-users 2>/dev/null \
-    | grep -qF "$admin_email"; then
-  docker compose exec -T librechat npm run --silent create-user -- \
-    "$admin_email" "Admin" "admin" "$admin_password" --email-verified=true \
-    || echo "Warning: could not create the LibreChat admin; see the message above." >&2
+users="$(docker compose exec -T librechat npm run --silent list-users 2>/dev/null || true)"
+if ! grep -qF "Email: ${admin_email}" <<<"$users"; then
+  # The script also prints LibreChat's whole configuration; show only its verdict.
+  if output="$(docker compose exec -T librechat npm run --silent create-user -- \
+      "$admin_email" "Admin" "admin" "$admin_password" --email-verified=true 2>&1)"; then
+    echo "Created the LibreChat admin (${admin_email})"
+  else
+    echo "Warning: could not create the LibreChat admin:" >&2
+    grep -i "error" <<<"$output" | tail -3 >&2
+  fi
 fi
 
 echo
