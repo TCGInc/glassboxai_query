@@ -1,9 +1,11 @@
-# Local secrets and Open WebUI state
+# Local secrets
 .env
 .env.*
 !.env.example
-openwebui/data/*
-!openwebui/data/.gitkeep
+
+# LibreChat configuration, generated from agent/ by agent/librechat_config.py
+librechat/*
+!librechat/.gitkeep
 
 # Generated FDA snapshots (recreate with scripts/convert_fda_workbooks.py)
 data/*.csv

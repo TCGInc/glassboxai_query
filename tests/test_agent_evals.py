@@ -3,7 +3,7 @@
     pytest -m agent                       # all questions, EVAL_RUNS runs each
     EVAL_QUESTIONS=q001,q014 pytest -m agent
     EVAL_TIERS=ambiguous,unanswerable pytest -m agent
-    EVAL_RUNTIME=openwebui pytest -m agent    # same suite through Open WebUI (parity)
+    EVAL_RUNTIME=librechat pytest -m agent    # same suite through LibreChat (parity)
 
 Settings: EVAL_RUNS (default 5), EVAL_MIN_CORRECT (default 0.8, the fraction of
 runs that must be correct for a question to pass). Every run's final answer and
@@ -14,7 +14,7 @@ import os
 
 import evalreport
 import pytest
-from openwebui_runtime import ask_openwebui
+from librechat_runtime import ask_librechat
 from questions import Question, load_questions
 
 from agent.strands_agent import ask, build_agent
@@ -23,7 +23,7 @@ pytestmark = pytest.mark.agent
 
 RUNS = int(os.environ.get("EVAL_RUNS", "5"))
 MIN_CORRECT = float(os.environ.get("EVAL_MIN_CORRECT", "0.8"))
-RUNTIME = os.environ.get("EVAL_RUNTIME", "strands")  # strands | openwebui
+RUNTIME = os.environ.get("EVAL_RUNTIME", "strands")  # strands | librechat
 ONLY_IDS = set(filter(None, os.environ.get("EVAL_QUESTIONS", "").split(",")))
 ONLY_TIERS = set(filter(None, os.environ.get("EVAL_TIERS", "").split(",")))
 
@@ -45,8 +45,8 @@ def test_question(q: Question):
     if not _has_credentials():
         pytest.skip("set LLM_MODEL_ID and OPENAI_API_KEY / GEMINI_API_KEY in .env")
 
-    if RUNTIME == "openwebui":
-        run_once = ask_openwebui
+    if RUNTIME == "librechat":
+        run_once = ask_librechat
     else:
 
         def run_once(question):

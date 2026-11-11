@@ -1,7 +1,8 @@
 # Glass Box AI: Database Query Agent (FDA Demo)
-# Three services: postgres, jupyter (AWS Strands), openwebui
+# Four services: postgres (FDA data), jupyter (AWS Strands), librechat (chat UI) and mongodb
+# (LibreChat's own database)
 # Usage:  cp .env.example .env  &&  ./start.sh
-# Reset:  ./stop.sh --reset   (deletes the DB volume; db/init re-runs on next start)
+# Reset:  ./stop.sh --reset   (deletes the volumes; the FDA data reloads and LibreChat starts fresh)
 
 name: glassbox-db-agent
 
@@ -58,14 +59,15 @@ services:
       EVAL_QUESTIONS: ${EVAL_QUESTIONS:-}
       EVAL_TIERS: ${EVAL_TIERS:-}
       EVAL_RUNTIME: ${EVAL_RUNTIME:-strands}
-      # agent/openwebui_provision.py configures Open WebUI from agent/ over its API
-      OPENWEBUI_URL: http://openwebui:8080
-      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@tcg.com}
-      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:-demo}
+      # The LibreChat parity runner logs in as the demo admin
+      LIBRECHAT_URL: http://librechat:3080
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@tcg.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-glassbox}
     volumes:
       - ./agent:/workspace/agent          # system prompt, skills, tools (single source of truth)
       - ./tests:/workspace/tests
       - ./notebooks:/workspace/notebooks
+      - ./librechat:/workspace/librechat  # agent/librechat_config.py writes librechat.yaml here
     working_dir: /workspace
     command: >
       jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
@@ -73,46 +75,78 @@ services:
     ports:
       - "127.0.0.1:8888:8888"
 
-  openwebui:
-    image: ghcr.io/open-webui/open-webui:v0.12.3
+  mongodb:
+    # LibreChat's own database (users, chats). Internal only: no host port.
+    image: mongo:8.0.20
+    restart: unless-stopped
+    command: mongod --noauth --quiet
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  librechat:
+    # The official image, unmodified. The agent is configuration: librechat/librechat.yaml,
+    # written from agent/ by agent/librechat_config.py (start.sh runs it).
+    image: registry.librechat.ai/librechat-ai/librechat:v0.8.8
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
     environment:
-      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?set WEBUI_SECRET_KEY in .env}
-      # Creates the admin account on first start, so no sign-up page is needed
-      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-admin@tcg.com}
-      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:-demo}
-      ENABLE_SIGNUP: "false"
-      # Settings come from this file and .env, not from values Open WebUI saved on an earlier
-      # start (otherwise an API key added later is ignored). Models, tools and skills are
-      # unaffected; they are provisioned from agent/.
-      ENABLE_PERSISTENT_CONFIG: "false"
-      # Demo conveniences: new chats start on the Glass Box model (also pinned in the sidebar),
-      # and the model does not generate follow-up suggestions after each answer.
-      DEFAULT_MODELS: glassbox-fda
-      DEFAULT_PINNED_MODELS: glassbox-fda
-      ENABLE_FOLLOW_UP_GENERATION: "false"
-      ENABLE_OLLAMA_API: "false"
-      # OpenAI and Gemini (via its OpenAI-compatible endpoint), semicolon-separated
-      OPENAI_API_BASE_URLS: "https://api.openai.com/v1;https://generativelanguage.googleapis.com/v1beta/openai"
-      OPENAI_API_KEYS: "${OPENAI_API_KEY:-};${GEMINI_API_KEY:-}"
-      # Demo: show only the Luna / Terra / Sol tiers next to Glass Box FDA, so "what can the model
-      # do by itself?" can be answered without a 100-model picker. "0" is the OpenAI connection
-      # above; LLM_MODEL_ID must be in this list. Edit the list to show other models.
-      OPENAI_API_CONFIGS: '{"0": {"model_ids": ["gpt-6-luna", "gpt-6-sol", "gpt-6.1-sol", "gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"]}}'
-      # Read by the run_query tool code; same read-only role as Strands.
-      # Not DATABASE_URL: Open WebUI reads that name for its own app database.
+      HOST: 0.0.0.0
+      PORT: 3080
+      DOMAIN_CLIENT: http://localhost:3080
+      DOMAIN_SERVER: http://localhost:3080
+      MONGO_URI: mongodb://mongodb:27017/LibreChat
+      APP_TITLE: Glass Box FDA
+      NO_INDEX: "true"
+      # Only the demo admin, created by start.sh; no sign-up page, no password reset.
+      ALLOW_REGISTRATION: "false"
+      ALLOW_EMAIL_LOGIN: "true"
+      ALLOW_SOCIAL_LOGIN: "false"
+      ALLOW_PASSWORD_RESET: "false"
+      ALLOW_UNVERIFIED_EMAIL_LOGIN: "true"
+      # Generated into .env by start.sh on first run
+      CREDS_KEY: ${LIBRECHAT_CREDS_KEY:?run ./start.sh to generate the LibreChat secrets}
+      CREDS_IV: ${LIBRECHAT_CREDS_IV:?run ./start.sh to generate the LibreChat secrets}
+      JWT_SECRET: ${LIBRECHAT_JWT_SECRET:?run ./start.sh to generate the LibreChat secrets}
+      JWT_REFRESH_SECRET: ${LIBRECHAT_JWT_REFRESH_SECRET:?run ./start.sh to generate the LibreChat secrets}
+      # No conversation search service (Meilisearch) and no Redis: fewer containers.
+      # One LibreChat process, so its scheduler needs no shared store.
+      SEARCH: "false"
+      SCHEDULES_SINGLE_PROCESS: "true"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # Demo: the plain models offered next to Glass Box FDA, so "what can the model do by
+      # itself?" can be answered without a 100-model picker. LLM_MODEL_ID must be in this list.
+      OPENAI_MODELS: gpt-6-luna,gpt-6-sol,gpt-6.1-sol,gpt-5.6-luna,gpt-5.6-sol,gpt-5.6-terra
+      # Read by the tool server (agent/mcp_server.py), which LibreChat starts; same read-only
+      # role as Strands. Only this URL reaches the container, never the admin credentials.
       FDA_DATABASE_URL: postgresql://${AGENT_RO_USER:-agent_ro}:${AGENT_RO_PASSWORD}@postgres:5432/${POSTGRES_DB:-fda}
+      # uv installs the tool server's two dependencies here once, not on every restart
+      UV_CACHE_DIR: /app/data/uv-cache
     volumes:
-      # Bind mount so webui.db (prompt, skills, tools config) can be copied out and reused.
-      # Gitignored: it can contain API keys. Scrub before sharing.
-      - ./openwebui/data:/app/backend/data
-      # The tool Open WebUI runs imports agent/tools.py, so both runtimes share one implementation
+      - ./librechat/librechat.yaml:/app/librechat.yaml:ro
+      # The tool server imports agent/tools.py, so both runtimes share one implementation
       - ./agent:/opt/glassbox/agent:ro
+      # The two skills, loaded as LibreChat's read-only deployment skills
+      - ./agent/skills:/app/skill:ro
+      - librechat-data:/app/data
     ports:
-      - "127.0.0.1:3000:8080"
+      - "127.0.0.1:3080:3080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
 
 volumes:
   pgdata:
+  mongodata:
+  librechat-data:
