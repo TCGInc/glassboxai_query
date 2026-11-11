@@ -46,10 +46,14 @@ def answer_from_content(content: list[dict]) -> Answer:
             answer.tool_calls.append(name)
             if name == "run_query":
                 args = call.get("args") or "{}"
-                sql = (json.loads(args) if isinstance(args, str) else args).get("sql", "")
+                sql = (json.loads(args) if isinstance(args, str) else args).get(
+                    "sql", ""
+                )
                 answer.queries.append(Query(sql=sql, result=call.get("output") or ""))
         elif part.get("type") == "text":
-            texts = [part.get("text", "")]  # the text after the last tool call is the answer
+            texts = [
+                part.get("text", "")
+            ]  # the text after the last tool call is the answer
     answer.text = "\n".join(texts).strip()
     return answer
 
@@ -59,7 +63,9 @@ def answer_from_final(event: dict) -> Answer:
     message = event.get("responseMessage") or {}
     answer = answer_from_content(message.get("content") or [])
     if not answer.text:
-        raise RuntimeError(f"LibreChat returned an empty answer: {json.dumps(event)[:600]}")
+        raise RuntimeError(
+            f"LibreChat returned an empty answer: {json.dumps(event)[:600]}"
+        )
     return answer
 
 
@@ -160,10 +166,14 @@ def ask_librechat(question: str) -> Answer:
     client = _logged_in_client()
     spec = load_spec()
     started = client.request(
-        "POST", f"/api/agents/chat/{spec['preset']['endpoint']}", chat_request(spec, question)
+        "POST",
+        f"/api/agents/chat/{spec['preset']['endpoint']}",
+        chat_request(spec, question),
     )
     final = client.final_event(started["streamId"])
     conversation_id = (final.get("responseMessage") or {}).get("conversationId")
     if conversation_id:
-        client.request("DELETE", "/api/convos", {"arg": {"conversationId": conversation_id}})
+        client.request(
+            "DELETE", "/api/convos", {"arg": {"conversationId": conversation_id}}
+        )
     return answer_from_final(final)

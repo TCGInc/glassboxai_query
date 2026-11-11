@@ -1,7 +1,7 @@
 """The agent's three tools: run_query, create_plan, complete_step.
 
 Plain functions with docstrings, independent of any agent framework. Each
-runtime wraps them (Strands `@tool`, an Open WebUI Tools class) without
+runtime wraps them (Strands `@tool`, LibreChat's MCP server agent/mcp_server.py) without
 changing their behavior. The docstrings are what the model sees.
 
 Tools return error text instead of raising, so the model can read the problem

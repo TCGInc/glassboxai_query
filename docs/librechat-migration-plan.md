@@ -1,6 +1,6 @@
 # Plan: Replace Open WebUI with LibreChat
 
-**Status:** Draft for review. No code has changed yet.
+**Status:** Implemented on the `librechat` branch (see the commits there). This plan is kept as the design record.
 **Rollback point:** tag `Open_WebUI_First_Demo` (commit `b070d56`), the working Open WebUI demo.
 **Background:** [librechat-feasibility.md](librechat-feasibility.md)
 **LibreChat version:** `v0.8.8`, the current stable release. Image: `registry.librechat.ai/librechat-ai/librechat:v0.8.8`. Everything below was checked against the `v0.8.8` source.

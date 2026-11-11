@@ -3,7 +3,12 @@
 import json
 
 import pytest
-from librechat_runtime import answer_from_content, answer_from_final, chat_request, tool_name
+from librechat_runtime import (
+    answer_from_content,
+    answer_from_final,
+    chat_request,
+    tool_name,
+)
 
 
 def call(name, args, output):
@@ -41,7 +46,9 @@ def test_tool_names_drop_the_mcp_server_suffix():
 
 def test_an_empty_answer_is_an_error_that_keeps_the_raw_event():
     with pytest.raises(RuntimeError, match="empty answer.*abc"):
-        answer_from_final({"final": True, "responseMessage": {"messageId": "abc", "content": []}})
+        answer_from_final(
+            {"final": True, "responseMessage": {"messageId": "abc", "content": []}}
+        )
     final = {"final": True, "responseMessage": {"content": CONTENT}}
     assert answer_from_final(final).text == "There are 37,891 events."
 

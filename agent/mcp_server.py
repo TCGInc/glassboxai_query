@@ -21,9 +21,9 @@ from pathlib import Path
 # Run as a script, so make `agent` importable from the directory above this file.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from mcp.server.mcpserver import MCPServer  # noqa: E402
+from mcp.server.mcpserver import MCPServer
 
-from agent import tools  # noqa: E402
+from agent import tools
 
 SERVER_NAME = "fda"
 TOOL_FUNCTIONS = (tools.run_query, tools.create_plan, tools.complete_step)

@@ -24,10 +24,14 @@ from agent.mcp_server import SERVER_NAME
 from agent.strands_agent import SYSTEM_PROMPT_PATH
 
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "librechat" / "librechat.yaml"
-CONFIG_VERSION = "1.3.17"  # the librechat.yaml schema version LibreChat v0.8.8 ships with
+CONFIG_VERSION = (
+    "1.3.17"  # the librechat.yaml schema version LibreChat v0.8.8 ships with
+)
 SPEC_NAME = "glassbox-fda"
 SPEC_LABEL = "Glass Box FDA"
-MCP_SERVER_SCRIPT = "/opt/glassbox/agent/mcp_server.py"  # ./agent is mounted at /opt/glassbox/agent
+MCP_SERVER_SCRIPT = (
+    "/opt/glassbox/agent/mcp_server.py"  # ./agent is mounted at /opt/glassbox/agent
+)
 GEMINI_ENDPOINT = "Gemini"
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
 
@@ -37,8 +41,10 @@ GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
 CONVERSATION_STARTERS = [
     "For fiscal year 2024, how many recall events were there in each recall class?",
     "Please break down the number of recalls by product type for fiscal year 2025.",
-    "Which five states had the most inspections in fiscal year 2025, "
-    "and how many inspections did each have?",
+    (
+        "Which five states had the most inspections in fiscal year 2025, "
+        "and how many inspections did each have?"
+    ),
     "How many warning letters did the FDA issue to drug manufacturers in fiscal year 2025?",
 ]
 
@@ -74,7 +80,9 @@ def model_spec(model_id: str) -> dict:
 def build_config(model_id: str, gemini_key: bool = False) -> dict:
     """The whole librechat.yaml. Gemini is offered when its key is set or the agent uses it."""
     endpoints = [endpoint_for(model_id)]
-    if (gemini_key or model_id.startswith("gemini")) and GEMINI_ENDPOINT not in endpoints:
+    if (
+        gemini_key or model_id.startswith("gemini")
+    ) and GEMINI_ENDPOINT not in endpoints:
         endpoints.append(GEMINI_ENDPOINT)
     config: dict = {
         "version": CONFIG_VERSION,
@@ -119,7 +127,10 @@ def build_config(model_id: str, gemini_key: bool = False) -> dict:
                 "name": GEMINI_ENDPOINT,
                 "apiKey": "${GEMINI_API_KEY}",
                 "baseURL": GEMINI_BASE_URL,
-                "models": {"default": [model_id] if endpoints[0] == GEMINI_ENDPOINT else [], "fetch": True},
+                "models": {
+                    "default": [model_id] if endpoints[0] == GEMINI_ENDPOINT else [],
+                    "fetch": True,
+                },
                 "titleConvo": True,
             }
         ]
@@ -153,7 +164,9 @@ def main() -> None:
     config = build_config(model_id, gemini_key=bool(os.environ.get("GEMINI_API_KEY")))
     OUTPUT_PATH.parent.mkdir(exist_ok=True)
     OUTPUT_PATH.write_text(render(config))
-    print(f"Wrote {OUTPUT_PATH.relative_to(OUTPUT_PATH.parent.parent)} ({SPEC_LABEL} on {model_id})")
+    print(
+        f"Wrote {OUTPUT_PATH.relative_to(OUTPUT_PATH.parent.parent)} ({SPEC_LABEL} on {model_id})"
+    )
 
 
 if __name__ == "__main__":

@@ -36,7 +36,9 @@ def test_mcp_server_delegates_to_agent_tools():
         result = asyncio.run(server.call_tool(name, arguments))
         return "".join(part.text for part in result.content)
 
-    assert call("run_query", sql="SELECT 1 AS one") == tools.run_query("SELECT 1 AS one")
+    assert call("run_query", sql="SELECT 1 AS one") == tools.run_query(
+        "SELECT 1 AS one"
+    )
     assert call("run_query", sql="DROP TABLE x").startswith("Error:")
     assert call("create_plan", steps="A\nB") == "Plan:\n1. [pending] A\n2. [pending] B"
     assert call("complete_step", step=2, note="ok").endswith("2. [done] B (note: ok)")
@@ -87,10 +89,14 @@ def test_conversation_starters_are_benchmark_questions():
         assert prompt in questions, "demo prompts should be regression-tested"
 
 
-@pytest.mark.parametrize("skill_dir", sorted(SKILLS_DIR.iterdir()), ids=lambda d: d.name)
+@pytest.mark.parametrize(
+    "skill_dir", sorted(SKILLS_DIR.iterdir()), ids=lambda d: d.name
+)
 def test_skill_frontmatter_suits_librechat(skill_dir):
     text = (skill_dir / "SKILL.md").read_text()
-    frontmatter = yaml.safe_load(text.split("---")[1])  # LibreChat rejects invalid YAML here
+    frontmatter = yaml.safe_load(
+        text.split("---")[1]
+    )  # LibreChat rejects invalid YAML here
     assert frontmatter["name"] == skill_dir.name
     # Longer descriptions are cut off in the skill list LibreChat shows the model.
     assert len(frontmatter["description"]) < 250
@@ -123,7 +129,9 @@ def test_live_config_is_the_generated_one(librechat):
     # ... and LibreChat serves that spec. It keeps the system prompt on the server.
     startup = librechat.request("GET", "/api/config")
     specs = {s["name"]: s for s in (startup.get("modelSpecs") or {}).get("list", [])}
-    assert config.SPEC_NAME in specs, "restart LibreChat after rerunning agent.librechat_config"
+    assert config.SPEC_NAME in specs, (
+        "restart LibreChat after rerunning agent.librechat_config"
+    )
     served = specs[config.SPEC_NAME]
     assert served["preset"]["model"] == os.environ["LLM_MODEL_ID"]
     assert served["conversation_starters"] == config.CONVERSATION_STARTERS

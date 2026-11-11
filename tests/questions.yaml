@@ -299,7 +299,7 @@
   question: "How many Class I recalls were classified in fiscal year 2011?"
   notes: "Database skill: recall classification dates start on 2012-06-08, so fiscal year 2011 is not covered. A bare 0 would be wrong."
 
-# --- demo prompts: table-shaped questions used as suggested prompts in Open WebUI ---
+# --- demo prompts: table-shaped questions used as conversation starters in LibreChat ---
 
 - id: q029
   tier: medium

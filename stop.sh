@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Stop the Glass Box stack. With --reset, also delete the database volume so
-# the next ./start.sh reloads it from the CSVs. Open WebUI state in
-# openwebui/data/ is a bind mount and is not touched.
+# Stop the Glass Box stack. With --reset, also delete the volumes: the FDA
+# database (the next ./start.sh reloads it from the CSVs) and LibreChat's
+# database (users and chats; start.sh recreates the admin).
 set -euo pipefail
 cd "$(dirname "$0")"
 
