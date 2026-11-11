@@ -1,6 +1,6 @@
 ---
 name: terminology
-description: Maps FDA and analyst vocabulary - NAI/VAI/OAI, recall Classes I-III, recall status, FEI, FDA centers, fiscal year, Form 483 citations - to this database's columns and exact stored values, and sets defaults for everyday phrasing such as "inspections" and "recalls". Read before interpreting a question.
+description: Maps FDA vocabulary (NAI/VAI/OAI, recall classes, recall status, FEI, centers, fiscal year, Form 483) to columns and stored values, and sets defaults for phrases like "inspections" and "recalls". Read before interpreting a question.
 ---
 
 # FDA terminology and how it appears in the data

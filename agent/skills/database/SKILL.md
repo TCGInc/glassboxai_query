@@ -1,6 +1,6 @@
 ---
 name: database
-description: Guide to the FDA inspections, citations and recalls database - its five tables, row grains, keys, joins, coverage dates, data-quality pitfalls, and what the data does not contain. Read before writing any SQL or deciding whether a question can be answered.
+description: Guide to the FDA inspections, citations and recalls database - the five tables, row grains, keys, joins, coverage dates, data-quality pitfalls, and what the data lacks. Read before writing SQL or deciding whether a question can be answered.
 ---
 
 # FDA compliance database
