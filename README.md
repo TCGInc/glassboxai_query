@@ -88,7 +88,7 @@ cp .env.example .env        # add your API key(s) and passwords
 ./start.sh
 ```
 
-For demos, LibreChat opens new chats on **Glass Box FDA** with four conversation starters (each one a benchmark question). The plain models stay selectable from the model menu, so you can show what a model does on its own.
+For demos, LibreChat opens new chats on **Glass Box FDA** with four conversation starters (each one a benchmark question). When a question is ambiguous, the agent asks back with LibreChat's built-in `ask_user_question` tool, which offers the likely interpretations as clickable choices. The plain models stay selectable from the model menu, so you can show what a model does on its own.
 
 There is nothing to configure in LibreChat's UI. `start.sh`:
 
@@ -206,7 +206,7 @@ AGENTS.md               # context for AI coding assistants and contributors
 ---
 
 ## Contributing
-Read [`AGENTS.md`](AGENTS.md) first. The most important rule: **keep it simple.** Three tools, two skills, one prompt. Changes to the agent must be applied to both runtimes together.
+Read [`AGENTS.md`](AGENTS.md) first. The most important rule: **keep it simple.** Three tools, two skills, one prompt; no new tools without the project lead's approval. Changes to the agent must be applied to both runtimes together.
 
 ---
 
