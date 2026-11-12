@@ -64,10 +64,13 @@ def model_spec(model_id: str) -> dict:
         "default": True,
         "showOnLanding": True,
         "conversation_starters": CONVERSATION_STARTERS,
-        # The three tools and the skills. LibreChat's other tools (web search, code
-        # execution, file search, memory) are off because the spec doesn't turn them on.
+        # The three tools and the skills, plus LibreChat's ask_user_question, which shows a
+        # clarifying question as a small form with clickable options and pauses until the
+        # user answers. LibreChat's other tools (web search, code execution, file search,
+        # memory) are off because the spec doesn't turn them on.
         "mcpServers": [SERVER_NAME],
         "skills": True,
+        "askUserQuestion": True,
         "preset": {
             "endpoint": endpoint_for(model_id),
             "model": model_id,
@@ -97,8 +100,8 @@ def build_config(model_id: str, gemini_key: bool = False) -> dict:
         "endpoints": {
             "agents": {
                 # No deferred tool search, code, web, files, memory or helper agents: the model
-                # sees our three tools plus LibreChat's skill loader.
-                "capabilities": ["tools", "skills"],
+                # sees our three tools, LibreChat's skill loader and ask_user_question.
+                "capabilities": ["tools", "skills", "ask_user_question"],
             },
         },
         "modelSpecs": {

@@ -3,13 +3,18 @@
 It logs in as the demo admin, starts a chat on the Glass Box FDA model spec (the same request
 the browser sends: the spec's preset plus its tools and skills), reads the response stream to
 the end, and converts the finished message into the same Answer the Strands runner returns.
-The chat is deleted afterwards so benchmark runs don't fill the admin's history.
+
+If the agent asks a clarifying question with LibreChat's ask_user_question tool, the run
+pauses for the user. Nobody answers in a benchmark, so the question itself (with its options)
+becomes the Answer's text, which is what the `clarify` grading looks for, and the paused run
+is stopped. Either way the chat is deleted so benchmark runs don't fill the admin's history.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.request
 import uuid
 from pathlib import Path
@@ -55,6 +60,29 @@ def answer_from_content(content: list[dict]) -> Answer:
                 part.get("text", "")
             ]  # the text after the last tool call is the answer
     answer.text = "\n".join(texts).strip()
+    return answer
+
+
+def question_text(payload: dict) -> str:
+    """An ask_user_question payload as plain text: each question, its context and options."""
+    lines = []
+    for question in payload.get("questions") or [payload.get("question") or {}]:
+        lines.append(question.get("question", ""))
+        if question.get("description"):
+            lines.append(question["description"])
+        for option in question.get("options") or []:
+            lines.append(f"- {option.get('label', '')}")
+    return "\n".join(line for line in lines if line).strip()
+
+
+def answer_from_pending(event: dict, content: list[dict]) -> Answer:
+    """The Answer for a run paused on ask_user_question: the work so far, then the question."""
+    answer = answer_from_content([part for part in content if part])
+    answer.text = question_text(event["data"]["payload"])
+    if not answer.text:
+        raise RuntimeError(
+            f"LibreChat asked an empty question: {json.dumps(event)[:600]}"
+        )
     return answer
 
 
@@ -107,8 +135,11 @@ class LibreChat:
             "POST", "/api/auth/login", {"email": email, "password": password}
         )["token"]
 
-    def final_event(self, stream_id: str) -> dict:
-        """Read the server-sent events of a generation until its final one."""
+    def outcome(self, stream_id: str) -> dict:
+        """Read a generation's server-sent events until it finishes or pauses for the user.
+
+        Returns the final event, or the `on_pending_action` event of a paused run.
+        """
         with self.open("GET", f"/api/agents/chat/stream/{stream_id}") as response:
             kind = ""
             for raw in response:
@@ -119,9 +150,20 @@ class LibreChat:
                     data = json.loads(line[5:])
                     if kind == "error":
                         raise RuntimeError(f"LibreChat reported an error: {data}")
-                    if data.get("final"):
+                    if data.get("final") or data.get("event") == "on_pending_action":
                         return data
         raise RuntimeError("LibreChat's stream ended without a final message")
+
+    def status(self, conversation_id: str, attempts: int = 10) -> dict:
+        """A generation's status, retried briefly while LibreChat reports it isn't ready."""
+        for _ in range(attempts - 1):
+            try:
+                return self.request("GET", f"/api/agents/chat/status/{conversation_id}")
+            except RuntimeError as error:
+                if "SERVER_NOT_READY" not in str(error):
+                    raise
+                time.sleep(1)
+        return self.request("GET", f"/api/agents/chat/status/{conversation_id}")
 
 
 def chat_request(spec: dict, question: str) -> dict:
@@ -170,10 +212,22 @@ def ask_librechat(question: str) -> Answer:
         f"/api/agents/chat/{spec['preset']['endpoint']}",
         chat_request(spec, question),
     )
-    final = client.final_event(started["streamId"])
-    conversation_id = (final.get("responseMessage") or {}).get("conversationId")
-    if conversation_id:
+    stream_id, conversation_id = started["streamId"], started["conversationId"]
+    event = client.outcome(stream_id)
+    if event.get("event") == "on_pending_action":
+        status = client.status(conversation_id)
         client.request(
-            "DELETE", "/api/convos", {"arg": {"conversationId": conversation_id}}
+            "POST",
+            "/api/agents/chat/abort",
+            {"streamId": stream_id, "conversationId": conversation_id},
         )
-    return answer_from_final(final)
+        answer = answer_from_pending(event, status.get("aggregatedContent") or [])
+    else:
+        answer = answer_from_final(event)
+        conversation_id = (event.get("responseMessage") or {}).get(
+            "conversationId", conversation_id
+        )
+    client.request(
+        "DELETE", "/api/convos", {"arg": {"conversationId": conversation_id}}
+    )
+    return answer

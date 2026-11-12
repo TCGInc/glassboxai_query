@@ -6,6 +6,7 @@ import pytest
 from librechat_runtime import (
     answer_from_content,
     answer_from_final,
+    answer_from_pending,
     chat_request,
     tool_name,
 )
@@ -65,3 +66,33 @@ def test_chat_request_names_the_spec_and_leaves_the_prompt_to_the_server():
     assert body["endpoint"] == "openAI" and body["model"] == "m"
     assert "promptPrefix" not in body
     assert body["ephemeralAgent"] == {"mcp": ["fda"], "skills": True}
+
+
+def test_a_paused_clarifying_question_becomes_the_answer():
+    event = {
+        "event": "on_pending_action",
+        "data": {
+            "payload": {
+                "type": "ask_user_question",
+                "questions": [
+                    {
+                        "id": "outcome",
+                        "question": "Which outcome should I count?",
+                        "description": "Failed is not an FDA term.",
+                        "options": [
+                            {"label": "OAI only", "value": "OAI only"},
+                            {"label": "VAI or OAI", "value": "VAI or OAI"},
+                        ],
+                    }
+                ],
+            }
+        },
+    }
+    # LibreChat's aggregated content has gaps (None) between parts.
+    content = [None, CONTENT[0], None, call("ask_user_question", {}, None)]
+    answer = answer_from_pending(event, content)
+    assert answer.tool_calls == ["skill", "ask_user_question"]
+    assert answer.text == (
+        "Which outcome should I count?\nFailed is not an FDA term.\n- OAI only\n- VAI or OAI"
+    )
+    assert answer.queries == []

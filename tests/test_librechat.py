@@ -55,8 +55,10 @@ def test_spec_carries_the_prompt_and_nothing_else_tunable():
     }
     assert spec["mcpServers"] == [mcp_server.SERVER_NAME]
     assert spec["skills"] is True
-    # LibreChat's own tools stay off: the spec doesn't turn any of them on.
-    for flag in ("webSearch", "fileSearch", "executeCode", "memory", "askUserQuestion"):
+    # The one LibreChat tool we use: clarifying questions as a form with options.
+    assert spec["askUserQuestion"] is True
+    # LibreChat's other tools stay off: the spec doesn't turn any of them on.
+    for flag in ("webSearch", "fileSearch", "executeCode", "memory"):
         assert flag not in spec
 
 
@@ -67,9 +69,13 @@ def test_gemini_models_use_the_gemini_endpoint():
     assert "custom" not in config.build_config("gpt-6-luna")["endpoints"]
 
 
-def test_only_our_tools_and_skills_are_enabled():
+def test_only_our_tools_skills_and_clarifying_questions_are_enabled():
     cfg = config.build_config("gpt-6-luna")
-    assert cfg["endpoints"]["agents"]["capabilities"] == ["tools", "skills"]
+    assert cfg["endpoints"]["agents"]["capabilities"] == [
+        "tools",
+        "skills",
+        "ask_user_question",
+    ]
     server = cfg["mcpServers"][mcp_server.SERVER_NAME]
     assert server["type"] == "stdio" and server["args"][-1] == config.MCP_SERVER_SCRIPT
     assert server["env"] == {"FDA_DATABASE_URL": "${FDA_DATABASE_URL}"}
