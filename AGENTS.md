@@ -77,6 +77,11 @@ Four containers via Docker Compose, targeting local Linux or WSL2. Keep the chat
 - Agents use `agent_ro`: `SELECT` only, `default_transaction_read_only = on`, and a `statement_timeout`. The role is the real guardrail. String-checking SQL is a convenience, not a control.
 - The admin DB credentials are used only by Postgres init scripts. They are never exposed to `jupyter` or `librechat` (LibreChat gets only the settings it needs, not the whole `.env`).
 - All ports are bound to `127.0.0.1`. The LibreChat demo login defaults to `admin@tcg.com` / `glassbox`, which is acceptable only because of that; set your own in `.env` before sharing the stack.
+- **AWS deployment** (`deploy/aws.sh`, `docs/aws-deployment.md`): the container ports stay on `127.0.0.1`. Caddy on the instance publishes two HTTPS sites:
+  - LibreChat, behind a non-default admin login (the script enforces 12+ characters);
+  - JupyterLab, behind an IP allow-list and a 32+ character token. JupyterLab runs code, so treat its token like a password to the API keys.
+
+  Postgres and MongoDB are never public, there is no SSH (administration is through SSM), and secrets live in SSM Parameter Store.
 - Secrets live in `.env` (gitignored). Never commit keys. `librechat/librechat.yaml` is generated and gitignored.
 - Public data only. No customer data, ever.
 - **Known limitation:** system prompts and skills are susceptible to prompt injection and social engineering. Don't overclaim.
@@ -169,6 +174,8 @@ docker compose exec jupyter pytest -m "not agent"   # fast tests
 docker compose exec jupyter pytest -m agent         # agent evals (uses tokens)
 ./stop.sh                         # stop the stack
 ./stop.sh --reset                 # full reset, including reloading the DB
+./deploy/aws.sh up                # deploy the current commit to AWS (ends with SUCCESS/FAILURE)
+./deploy/aws.sh status | logs | test | shell | stop | start | destroy
 ```
 
 ---
