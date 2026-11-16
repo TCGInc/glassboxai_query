@@ -10,7 +10,7 @@ set -euo pipefail
 release="$1" domain="$2" jupyter_domain="$3" jupyter_cidrs="$4" ssm_path="$5" region="$6"
 app=/opt/glassbox
 user=ubuntu
-export PATH="$PATH:/snap/bin" DEBIAN_FRONTEND=noninteractive
+export PATH="$PATH:/snap/bin" DEBIAN_FRONTEND=noninteractive HOME="${HOME:-/root}"
 
 exec > >(tee -a /var/log/glassbox-deploy.log) 2>&1
 echo "=== $(date -u +%FT%TZ) deploying $(basename "$release") to https://${domain}"
@@ -68,8 +68,10 @@ mv /etc/caddy/Caddyfile.new /etc/caddy/Caddyfile
 systemctl reload caddy
 
 # --- 5. The stack: the same start.sh as on a laptop ----------------------------------------
-# sudo starts a fresh login, so the docker group just added applies. The admin password is
-# filtered out so it doesn't end up in the SSM command history.
+# sudo starts a fresh login, so the docker group just added applies. Images are pulled quietly
+# first: download progress bars would fill SSM's 24 KB output limit and hide the useful lines.
+# The admin password is filtered out so it doesn't end up in the SSM command history.
+sudo -u "$user" -H bash -c "cd '$app' && docker compose pull --quiet --ignore-buildable && docker pull -q python:3.12-slim >/dev/null"
 sudo -u "$user" -H bash -c "cd '$app' && ./start.sh" | sed -u '/password:/d'
 
 # The two backends answer locally before Caddy is asked to serve them
