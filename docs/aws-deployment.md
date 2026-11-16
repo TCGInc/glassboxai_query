@@ -97,6 +97,8 @@ Commit your changes, then run `./deploy/aws.sh up` again. It deploys the **commi
 
 To change a secret (for example the OpenAI key or the Jupyter token), edit `.env` and rerun `up`.
 
+If a commit changes the FDA workbooks in `data/raw/`, the deploy converts them again, but the database keeps its old data. Reload it from `./deploy/aws.sh shell`: in `/opt/glassbox`, run `./stop.sh --reset`, then rerun `up`. This also deletes chats and users.
+
 **The LibreChat admin is created only once.** Changing `ADMIN_PASSWORD` afterwards doesn't change the existing account. Either change the password in LibreChat, or use `./deploy/aws.sh shell` and, in `/opt/glassbox`, run `./stop.sh --reset`, then rerun `up`. The reset also deletes all chats.
 
 ## How a deploy works

@@ -26,8 +26,11 @@ systemctl enable --now docker caddy
 usermod -aG docker "$user"
 
 # --- 2. The release: replace the code, keep generated and local state ----------------------
+# Compare by content and don't copy timestamps: git archive stamps every file with the commit
+# time, which would make unchanged FDA workbooks look newer than their CSVs (and start.sh
+# would convert them again). Only files that really changed get a new timestamp.
 mkdir -p "$app"
-rsync -a --delete \
+rsync -rlp --checksum --delete \
   --exclude /.env \
   --exclude '/data/*.csv' \
   --exclude /librechat/librechat.yaml \
