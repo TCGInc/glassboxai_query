@@ -8,6 +8,8 @@ unreachable (start the stack with ./start.sh).
 import asyncio
 import inspect
 import os
+import urllib.request
+from pathlib import Path
 
 import pytest
 import yaml
@@ -108,6 +110,24 @@ def test_skill_frontmatter_suits_librechat(skill_dir):
     assert len(frontmatter["description"]) < 250
 
 
+BRANDING_DIR = Path(__file__).resolve().parent.parent / "branding"
+# What branding/apply.sh copies into LibreChat's client: source file -> URL path
+BRANDING_FILES = {
+    "logo.svg": "/assets/logo.svg",
+    "icon.svg": config.SPEC_ICON_URL,
+    "theme.css": "/assets/glassbox-theme.css",
+}
+
+
+def test_branding_files_are_where_apply_sh_copies_them():
+    script = (BRANDING_DIR / "apply.sh").read_text()
+    for name, url in BRANDING_FILES.items():
+        assert (BRANDING_DIR / name).is_file()
+        assert f'cp "$src/{name}" "$dist{url}"' in script
+    # The agent's icon in the chat is the agency logo.
+    assert config.model_spec("some-model")["iconURL"] == config.SPEC_ICON_URL
+
+
 # --- live -------------------------------------------------------------------
 
 
@@ -154,3 +174,16 @@ def test_live_skills_are_the_skill_files(librechat):
     listed = librechat.request("GET", "/api/skills?limit=100")
     names = sorted(s["name"] for s in listed.get("skills", listed.get("data", [])))
     assert names == sorted(d.name for d in SKILLS_DIR.iterdir())
+
+
+def test_live_branding_is_the_branding_files(librechat):
+    # branding/apply.sh runs at LibreChat's start, so a stale copy means it needs a restart.
+    def fetch(path: str) -> bytes:
+        with urllib.request.urlopen(librechat.base_url + path, timeout=30) as response:
+            return response.read()
+
+    assert b'href="assets/glassbox-theme.css?v=' in fetch("/login")
+    for name, url in BRANDING_FILES.items():
+        assert fetch(url) == (BRANDING_DIR / name).read_bytes(), (
+            "restart LibreChat to apply branding/"
+        )
