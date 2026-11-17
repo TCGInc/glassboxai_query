@@ -68,6 +68,7 @@ services:
       - ./tests:/workspace/tests
       - ./notebooks:/workspace/notebooks
       - ./librechat:/workspace/librechat  # agent/librechat_config.py writes librechat.yaml here
+      - ./branding:/workspace/branding:ro # tests/test_librechat.py checks LibreChat serves these
     working_dir: /workspace
     command: >
       jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
@@ -92,6 +93,9 @@ services:
     # The official image, unmodified. The agent is configuration: librechat/librechat.yaml,
     # written from agent/ by agent/librechat_config.py (start.sh runs it).
     image: registry.librechat.ai/librechat-ai/librechat:v0.8.8
+    # Copies the agency logo and color theme from ./branding into the client, then runs the
+    # image's own command (npm run backend). See developer.md.
+    command: ["sh", "/opt/glassbox/branding/apply.sh"]
     restart: unless-stopped
     depends_on:
       postgres:
@@ -137,6 +141,8 @@ services:
       - ./agent:/opt/glassbox/agent:ro
       # The two skills, loaded as LibreChat's read-only deployment skills
       - ./agent/skills:/app/skill:ro
+      # Agency logo and color theme, applied at startup by branding/apply.sh
+      - ./branding:/opt/glassbox/branding:ro
       - librechat-data:/app/data
     ports:
       - "127.0.0.1:3080:3080"

@@ -32,6 +32,8 @@ SPEC_LABEL = "Glass Box FDA"
 MCP_SERVER_SCRIPT = (
     "/opt/glassbox/agent/mcp_server.py"  # ./agent is mounted at /opt/glassbox/agent
 )
+# The agent's icon: the agency logo (branding/icon.svg), copied in by branding/apply.sh
+SPEC_ICON_URL = "/assets/glassbox-icon.svg"
 GEMINI_ENDPOINT = "Gemini"
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
 
@@ -61,6 +63,7 @@ def model_spec(model_id: str) -> dict:
         "name": SPEC_NAME,
         "label": SPEC_LABEL,
         "description": "FDA inspections, citations and recalls, with the work shown.",
+        "iconURL": SPEC_ICON_URL,
         "default": True,
         "showOnLanding": True,
         "conversation_starters": CONVERSATION_STARTERS,

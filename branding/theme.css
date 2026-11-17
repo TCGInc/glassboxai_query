@@ -1,0 +1,70 @@
+/*
+ * Agency color theme for LibreChat v0.8.8 (FDA palette).
+ *
+ * LibreChat colors every part of its interface from named CSS variables. This file redefines
+ * the ones that matter, and branding/apply.sh links it after LibreChat's own stylesheet.
+ * Each value is an RGB triplet ("R G B", no commas), the format LibreChat uses.
+ *
+ *   Dominant  (60%)  #007cba  0 124 186   chat area, top bar, primary buttons
+ *   Secondary (30%)  #222c67  34 44 103   sidebar, message box, menus, dialogs
+ *   Accent     (8%)  #a0a0a3  160 160 163 borders, focus rings
+ *
+ * The brand look is the same in LibreChat's light and dark modes. The high-contrast modes are
+ * left as LibreChat ships them (:not(.high-contrast)), for accessibility.
+ * See developer.md for how to find and change other variables.
+ */
+
+html:not(.high-contrast),
+html.dark:not(.high-contrast) {
+  /* Dominant: the chat area and the bar above it */
+  --presentation: 0 124 186;
+  --header-primary: 0 124 186;
+  --header-hover: 0 104 156;
+  --header-button-hover: 0 104 156;
+  --surface-submit: 0 124 186;
+  --surface-submit-hover: 0 104 156;
+
+  /* Secondary: the sidebar, the message box, menus and dialogs */
+  --surface-primary: 34 44 103;
+  --surface-primary-alt: 34 44 103;
+  --surface-primary-contrast: 46 58 128;
+  --surface-secondary: 34 44 103;
+  --surface-secondary-alt: 46 58 128;
+  --surface-tertiary: 46 58 128;
+  --surface-tertiary-alt: 46 58 128;
+  --surface-chat: 34 44 103;
+  --surface-dialog: 34 44 103;
+  --surface-code: 26 34 80;
+
+  /* Hover and selected states: lighter shades of the secondary color */
+  --surface-hover: 46 58 128;
+  --surface-hover-alt: 58 71 147;
+  --surface-active: 58 71 147;
+  --surface-active-alt: 46 58 128;
+  --surface-composer-hover: 46 58 128;
+
+  /* Text: light on both brand colors */
+  --text-primary: 255 255 255;
+  --text-secondary: 236 236 240;
+  --text-secondary-alt: 224 224 228;
+  --text-tertiary: 224 224 228;
+  --text-muted: 224 224 228;
+
+  /* Accent: borders, focus rings and highlights */
+  --border-light: 160 160 163;
+  --border-medium: 160 160 163;
+  --border-medium-alt: 160 160 163;
+  --border-heavy: 160 160 163;
+  --border-xheavy: 160 160 163;
+  --ring-primary: 160 160 163;
+  --accent-primary: 255 255 255;
+  --accent-primary-hover: 236 236 240;
+}
+
+/* The login and sign-up fields: LibreChat paints them with a fixed white (or near-black) fill
+ * rather than a variable, so give them the secondary color and light text explicitly. */
+html:not(.high-contrast) .webkit-dark-styles,
+html:not(.high-contrast) .webkit-dark-styles:focus {
+  -webkit-text-fill-color: rgb(var(--text-primary));
+  -webkit-box-shadow: inset 0 0 0 50vh rgb(var(--surface-primary));
+}

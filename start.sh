@@ -37,16 +37,18 @@ fi
 
 export HOST_UID="$(id -u)" HOST_GID="$(id -g)"
 
-# LibreChat reads its configuration at startup, so write it from agent/ first, and restart a
-# running LibreChat if the configuration changed.
+# LibreChat reads its configuration and branding at startup, so write the configuration from
+# agent/ first, and restart a running LibreChat if either changed.
 config=librechat/librechat.yaml
-before="$(cat "$config" 2>/dev/null || true)"
+librechat_inputs() { cat "$config" branding/* 2>/dev/null || true; }
+before=""
+if [[ -f "$config" ]]; then before="$(librechat_inputs | cksum)"; fi
 docker compose build --quiet jupyter
 docker compose run --rm --no-deps -T jupyter python -m agent.librechat_config
 
 docker compose up -d --wait --wait-timeout 900
-if [[ -n "$before" && "$before" != "$(cat "$config")" ]]; then
-  echo "LibreChat configuration changed; restarting LibreChat..."
+if [[ -n "$before" && "$before" != "$(librechat_inputs | cksum)" ]]; then
+  echo "LibreChat configuration or branding changed; restarting LibreChat..."
   docker compose restart librechat
   docker compose up -d --wait --wait-timeout 300 librechat
 fi
