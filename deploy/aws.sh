@@ -11,6 +11,7 @@
 #   stop      stop the instance to save money (data, IP address and URLs are kept)
 #   start     start it again
 #   destroy   delete everything, including chats and users
+#             (asks for the stack name; or pass it: destroy --confirm <stack-name>)
 #
 # Settings come from .env (DEPLOY_* and the app's own keys); see .env.example.
 # Every run ends with SUCCESS or FAILURE (and the exit code to match).
@@ -357,13 +358,26 @@ cmd_start() {
 }
 
 cmd_destroy() {
+  local confirmed="" status bucket answer names
+  if [[ "${1:-}" == --confirm ]]; then
+    confirmed="${2:-}"
+  elif [[ -n "${1:-}" ]]; then
+    current_step="checking the arguments"
+    die "usage: destroy [--confirm <stack-name>]"
+  fi
   load_settings
-  local status bucket answer names
   status="$(stack_status)"
+  step "confirming"
   echo "This deletes stack ${STACK} in ${REGION}: the instance and its disk (all chats and users),"
   echo "the release bucket and the secrets under ${SSM_PATH}. The FDA data itself is in git."
-  read -r -p "Type the stack name to confirm: " answer </dev/tty
-  [[ "$answer" == "$STACK" ]] || die "not confirmed"
+  if [[ -n "$confirmed" ]]; then
+    answer="$confirmed"
+  elif { : </dev/tty; } 2>/dev/null; then
+    read -r -p "Type the stack name to confirm: " answer </dev/tty
+  else
+    die "no terminal to confirm in; rerun as: ./deploy/aws.sh destroy --confirm ${STACK}"
+  fi
+  [[ "$answer" == "$STACK" ]] || die "not confirmed: '${answer}' is not the stack name ${STACK}"
   if [[ "$status" != NONE ]]; then
     bucket="$(stack_output BucketName 2>/dev/null || true)"
     if [[ -n "$bucket" && "$bucket" != None ]]; then
@@ -384,12 +398,13 @@ cmd_destroy() {
 }
 
 usage() {
-  sed -n '5,14p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '5,15p' "$0" | sed 's/^# \{0,1\}//'
   exit 2
 }
 
 case "$command_name" in
-  up | status | test | shell | stop | start | destroy) "cmd_${command_name}" ;;
+  up | status | test | shell | stop | start) "cmd_${command_name}" ;;
+  destroy) cmd_destroy "${@:2}" ;;
   logs) cmd_logs "${2:-}" ;;
   *) current_step="usage"; usage ;;
 esac

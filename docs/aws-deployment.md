@@ -74,7 +74,8 @@ Deployment settings in `.env`:
 ./deploy/aws.sh shell       # a root shell on the instance (needs the Session Manager plugin)
 ./deploy/aws.sh stop        # stop the instance to save money (data and addresses are kept)
 ./deploy/aws.sh start       # start it again
-./deploy/aws.sh destroy     # delete everything, including chats and users
+./deploy/aws.sh destroy     # delete everything, including chats and users (asks for the stack name;
+                            # without a terminal: destroy --confirm <stack-name>)
 ```
 
 Each run ends with the addresses and `SUCCESS` (exit code 0), or with `FAILURE: <the step that failed>` (non-zero exit code).
