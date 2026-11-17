@@ -100,6 +100,8 @@ There is nothing to configure in LibreChat's UI. `start.sh`:
 
 `./stop.sh` stops the stack; `./stop.sh --reset` also deletes the volumes (the FDA database and LibreChat's users and chats).
 
+LibreChat is branded for the agency (logo and color theme) from `branding/`, applied when LibreChat starts. To change the look, see [developer.md](developer.md).
+
 The first LibreChat chat takes a few extra seconds while `uv` installs the tool server's two Python packages; they are cached after that.
 
 | Service | URL |
@@ -198,7 +200,10 @@ deploy/
   aws.sh                # deploy to AWS (docs/aws-deployment.md)
   aws/template.yaml     # the AWS resources (CloudFormation)
   aws/bootstrap.sh      # runs on the instance: install, write .env and HTTPS config, start.sh
+branding/               # LibreChat logo, agent icon and color theme (see developer.md)
+  apply.sh              # copies them into LibreChat at startup
 AGENTS.md               # context for AI coding assistants and contributors
+developer.md            # how to customize LibreChat's look and feel
 ```
 
 ---

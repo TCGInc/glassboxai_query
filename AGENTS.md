@@ -70,7 +70,7 @@ Four containers via Docker Compose, targeting local Linux or WSL2. Keep the chat
 |---|---|
 | `postgres` | Holds the dataset. Loaded from cleaned CSVs on first start. Agents connect only as a read-only role. |
 | `jupyter` | JupyterLab + AWS Strands. Hosts the Python agent, the demo notebook, and the pytest suites. |
-| `librechat` | LibreChat with the same agent configured (prompt, skills, tools) for live demos. It starts the tool server (`agent/mcp_server.py`) itself. |
+| `librechat` | LibreChat with the same agent configured (prompt, skills, tools) for live demos. It starts the tool server (`agent/mcp_server.py`) itself. Its agency branding (logo, colors) is copied in from `branding/` at startup; see `developer.md`. |
 | `mongodb` | LibreChat's own database (users, chats). Internal only. |
 
 ### Security posture (demo-grade, but deliberate)
