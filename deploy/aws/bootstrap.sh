@@ -77,6 +77,20 @@ systemctl reload caddy
 sudo -u "$user" -H bash -c "cd '$app' && docker compose pull --quiet --ignore-buildable && docker pull -q python:3.12-slim >/dev/null"
 sudo -u "$user" -H bash -c "cd '$app' && ./start.sh" | sed -u '/password:/d'
 
+# LibreChat applies branding/ only when it starts. start.sh restarts it when branding changes,
+# but here the new files were copied in (step 2) before start.sh ran, so it can't see the
+# change. Compare with the branding LibreChat was last started with instead.
+if [[ -d "$app/branding" ]]; then
+  applied=/var/lib/glassbox/branding.cksum
+  current="$(cat "$app"/branding/* | cksum)"
+  if [[ "$(cat "$applied" 2>/dev/null || true)" != "$current" ]]; then
+    echo "Branding changed; restarting LibreChat..."
+    sudo -u "$user" -H bash -c "cd '$app' && docker compose restart librechat && docker compose up -d --wait --wait-timeout 300 librechat"
+  fi
+  mkdir -p "$(dirname "$applied")"
+  echo "$current" >"$applied"
+fi
+
 # The two backends answer locally before Caddy is asked to serve them
 curl -fsS --max-time 10 http://127.0.0.1:3080/health >/dev/null
 curl -fsS --max-time 10 -o /dev/null http://127.0.0.1:8888/api

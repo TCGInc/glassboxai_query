@@ -8,9 +8,11 @@ Checked against LibreChat **v0.8.8**, the version pinned in `docker-compose.yml`
 
 | What | Where it shows | File |
 |---|---|---|
-| Chat-area background, the bar above it, primary buttons | Chat page, login page button | `branding/theme.css` (dominant color) |
-| Sidebar, message box, menus, dialogs, login page | Everywhere else | `branding/theme.css` (secondary color) |
-| Borders and focus rings | Everywhere | `branding/theme.css` (accent color) |
+| Chat area: white, with dark text | Chat and new-chat pages (messages, tables, the message box, the bar above) | `branding/theme.css` (the `main:has(#prompt-textarea)` rules) |
+| Code boxes: light blue, with dark code text | Code in answers (for example the SQL the agent ran) | `branding/theme.css` (`--surface-code`, `--syntax-*`) |
+| Primary buttons, links and focus rings | Login button, send button, links in answers | `branding/theme.css` (dominant color) |
+| Sidebar, menus, dialogs, login page | Everywhere outside the chat area | `branding/theme.css` (secondary color) |
+| Borders | Everywhere | `branding/theme.css` (accent color) |
 | Login-page logo | Top of the login page | `branding/logo.svg` (white version of the logo, for the navy background) |
 | Agent icon | Model menu, new-chat screen, next to each answer | `branding/icon.svg` (the logo on a white circle) |
 | Application title | Browser tab, login page | `APP_TITLE` in `docker-compose.yml` |
@@ -20,11 +22,13 @@ The FDA palette in `theme.css`:
 
 | Role | Share | Color | Used for |
 |---|---|---|---|
-| Dominant | 60% | `#007cba` | Chat area, top bar, primary buttons |
-| Secondary | 30% | `#222c67` | Sidebar, message box, menus, dialogs, login page |
-| Accent | 8% | `#a0a0a3` | Borders, focus rings |
+| Dominant | 60% | `#007cba` | Primary buttons, links and focus rings; pale tints of it for your own messages, table headers and cards |
+| Secondary | 30% | `#222c67` | Sidebar, menus, dialogs, login page |
+| Accent | 8% | `#a0a0a3` | Borders |
+| (chat area) | | `#ffffff` | The page behind messages, so answers, tables and code are easy to read |
+| (code boxes) | | `#9196b3` | The secondary navy lightened 50% toward white |
 
-Text is white or near-white on both brand colors. The brand look is the same in LibreChat's light and dark modes. The two **high-contrast** modes (the half-circle button on the login page and in Settings) are deliberately left as LibreChat ships them, for accessibility.
+Text is white on the navy areas and near-black (`#212529`) in the chat area. Every syntax color in code boxes has at least 4.5:1 contrast on `#9196b3`. The brand look is the same in LibreChat's light and dark modes. The two **high-contrast** modes (the half-circle button on the login page and in Settings) are deliberately left as LibreChat ships them, for accessibility.
 
 ## How it works
 
@@ -52,7 +56,14 @@ Details that matter:
 2. Apply it: run `./start.sh`, which notices the change and restarts LibreChat, or run `docker compose restart librechat`.
 3. Reload the page. There is no need to clear the browser cache for the stylesheet.
 
-Keep text readable: aim for a contrast ratio of at least 4.5:1 between text and its background (WCAG AA). White on `#007cba` is about 4.6:1, so don't make the dominant color any lighter without darkening the text.
+Keep text readable: aim for a contrast ratio of at least 4.5:1 between text and its background (WCAG AA). Check with any WCAG contrast checker.
+- White on `#007cba` (the buttons) is about 4.6:1, so don't make the dominant color any lighter.
+- The code-box color is a mid-tone, which is the hardest background for colored text. If you change `--surface-code`, recheck the `--syntax-*` colors next to it; they were darkened just enough to pass on `#9196b3`.
+
+**The chat area is a separate block.** The rules that start with `html:not(.high-contrast) main:has(#prompt-textarea)` apply only inside the chat page's main area, the one that contains the message box. They switch it to a white page with dark text. They don't affect the sidebar, menus, dialogs or the login page, which also uses a `<main>` but has no message box. Inside that block:
+- answers (`.markdown`) use LibreChat's typography variables (`--tw-prose-*`); in dark mode LibreChat switches them to light text (`dark:prose-invert`), which the theme turns back;
+- code boxes (`.markdown pre`) get every surface variable set to `--surface-code`, and code colors come from `--syntax-*`;
+- table headers and inline code use fixed grays in LibreChat, so the theme sets their colors directly.
 
 ### Change the logo or agent icon
 
@@ -87,6 +98,7 @@ Variables already set in `theme.css` (light-mode defaults in brackets):
 | `--header-primary`, `--header-hover` | The bar above the chat |
 | `--surface-primary`, `--surface-primary-alt` | Sidebar, login page, popovers |
 | `--surface-chat` | The message box |
+| `--surface-code`, `--syntax-text`, `--syntax-keyword`, `--syntax-string`, ... | Code boxes and the colors of code in them (gray-blue, dark text) |
 | `--surface-secondary`, `--surface-tertiary`, `--surface-dialog` | Cards, conversation starters, dialogs |
 | `--surface-hover`, `--surface-active` | Hover and selected states |
 | `--surface-submit` | Primary buttons (green) |
@@ -104,7 +116,7 @@ Replace the two SVGs and the color values in `theme.css`. Then update `APP_TITLE
 Look at these screens in both light and dark mode. Switch with the sun/moon button on the login page, or in Settings → General → Theme.
 - **Login page:** the logo is visible, typed text in the fields is readable, and the button is on brand.
 - **New-chat screen:** the agent icon, the conversation starters and the message box.
-- **A conversation:** an answer with a table and a code block, and the `ask_user_question` form for an ambiguous question.
+- **A conversation:** an answer with a table and a code block (text, table and code readable on the white chat area), and the `ask_user_question` form for an ambiguous question.
 - **Open menus:** the model menu (click **Glass Box FDA**), the account menu and Settings.
 
 Then select high contrast and confirm it still looks like stock LibreChat (pure black or white).
@@ -119,7 +131,7 @@ docker compose exec jupyter pytest tests/test_librechat.py
 
 ## Upgrading LibreChat
 
-The theme depends on LibreChat internals that can change between versions: variable names, the `assets/logo.svg` path, the `</head>` tag in `index.html`, and the `.webkit-dark-styles` class. After changing the image tag:
+The theme depends on LibreChat internals that can change between versions: variable names, the `assets/logo.svg` path, the `</head>` tag in `index.html`, the `.webkit-dark-styles` and `dark:prose-invert` classes, the `#prompt-textarea` id, and the `.markdown pre` / `th` markup of answers. After changing the image tag:
 
 1. Run `./start.sh`, then `pytest tests/test_librechat.py`.
 2. Go through [Checking a change](#checking-a-change).

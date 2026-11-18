@@ -5,9 +5,11 @@
  * the ones that matter, and branding/apply.sh links it after LibreChat's own stylesheet.
  * Each value is an RGB triplet ("R G B", no commas), the format LibreChat uses.
  *
- *   Dominant  (60%)  #007cba  0 124 186   chat area, top bar, primary buttons
- *   Secondary (30%)  #222c67  34 44 103   sidebar, message box, menus, dialogs
- *   Accent     (8%)  #a0a0a3  160 160 163 borders, focus rings
+ *   Dominant  (60%)  #007cba  0 124 186   primary buttons, links, focus rings in the chat area
+ *   Secondary (30%)  #222c67  34 44 103   sidebar, menus, dialogs, login page
+ *   Accent     (8%)  #a0a0a3  160 160 163 borders
+ *   Chat area        #ffffff  white, with dark text, so answers, tables and code are easy to read
+ *   Code boxes       #9196b3  145 150 179 the secondary navy lightened 50% toward white
  *
  * The brand look is the same in LibreChat's light and dark modes. The high-contrast modes are
  * left as LibreChat ships them (:not(.high-contrast)), for accessibility.
@@ -16,7 +18,7 @@
 
 html:not(.high-contrast),
 html.dark:not(.high-contrast) {
-  /* Dominant: the chat area and the bar above it */
+  /* Dominant: buttons (the chat area itself is white, see the end of this file) */
   --presentation: 0 124 186;
   --header-primary: 0 124 186;
   --header-hover: 0 104 156;
@@ -67,4 +69,103 @@ html:not(.high-contrast) .webkit-dark-styles,
 html:not(.high-contrast) .webkit-dark-styles:focus {
   -webkit-text-fill-color: rgb(var(--text-primary));
   -webkit-box-shadow: inset 0 0 0 50vh rgb(var(--surface-primary));
+}
+
+/* --- The chat area: a white page with dark text, in light and dark mode ----------------------
+ * The <main> that holds the message box (#prompt-textarea): messages, tables, code, the message
+ * box and the bar above them. The login page also uses <main> but has no message box, so it keeps
+ * the navy theme above, as do the sidebar, menus and dialogs. */
+html:not(.high-contrast) main:has(#prompt-textarea) {
+  --presentation: 255 255 255;
+  --header-primary: 255 255 255;
+  --header-hover: 240 246 250;
+  --header-button-hover: 240 246 250;
+
+  --text-primary: 33 37 41;
+  --text-secondary: 73 80 87;
+  --text-secondary-alt: 90 97 104;
+  --text-tertiary: 90 97 104;
+  --text-muted: 90 97 104;
+
+  /* The message box, your own messages and cards: white and a pale tint of the dominant blue */
+  --surface-chat: 255 255 255;
+  --surface-primary: 255 255 255;
+  --surface-primary-alt: 242 247 251;
+  --surface-secondary: 242 247 251;
+  --surface-secondary-alt: 229 241 248;
+  --surface-tertiary: 229 241 248;
+  --surface-tertiary-alt: 242 247 251;
+  --surface-hover: 229 241 248;
+  --surface-hover-alt: 214 233 244;
+  --surface-active: 214 233 244;
+  --surface-active-alt: 229 241 248;
+  --surface-composer-hover: 242 247 251;
+  --surface-dialog: 255 255 255;
+  background-color: rgb(var(--presentation));
+
+  --accent-primary: 0 124 186;
+  --accent-primary-hover: 0 104 156;
+  --link: 0 104 156;
+  --ring-primary: 0 124 186;
+
+  /* Code boxes: the secondary navy (#222c67) lightened 50% toward white, with dark code text.
+   * Every syntax color has at least 4.5:1 contrast on it (WCAG AA). */
+  --surface-code: 145 150 179;
+  --syntax-text: 20 22 40;
+  --syntax-comment: 44 47 68;
+  --syntax-meta: 44 47 68;
+  --syntax-builtin: 73 41 0;
+  --syntax-keyword: 10 30 120;
+  --syntax-string: 0 56 38;
+  --syntax-attr: 92 16 58;
+  --syntax-title: 98 15 11;
+}
+
+/* Dark mode switches answers to light "inverted" text; keep the chat area's dark text instead */
+html.dark:not(.high-contrast) main:has(#prompt-textarea) .dark\:prose-invert {
+  --tw-prose-body: rgb(var(--text-primary));
+  --tw-prose-headings: rgb(var(--text-primary));
+  --tw-prose-lead: rgb(var(--text-primary));
+  --tw-prose-links: rgb(var(--link));
+  --tw-prose-bold: rgb(var(--text-primary));
+  --tw-prose-counters: rgb(var(--text-secondary));
+  --tw-prose-bullets: rgb(var(--text-secondary));
+  --tw-prose-hr: rgb(var(--border-medium));
+  --tw-prose-quotes: rgb(var(--text-primary));
+  --tw-prose-quote-borders: rgb(var(--border-medium));
+  --tw-prose-captions: rgb(var(--text-secondary));
+  --tw-prose-code: rgb(var(--text-primary));
+  --tw-prose-pre-code: rgb(var(--syntax-text));
+  --tw-prose-pre-bg: rgb(var(--surface-code));
+  --tw-prose-th-borders: rgb(var(--border-medium));
+  --tw-prose-td-borders: rgb(var(--border-medium));
+  color: rgb(var(--text-primary));
+}
+
+/* Code boxes: every surface inside them (header bar and body) is the code tint */
+html:not(.high-contrast) main:has(#prompt-textarea) .markdown pre {
+  /* The header bar has no background of its own in dark mode; LibreChat's box is rounded-xl */
+  background-color: rgb(var(--surface-code));
+  border-radius: 0.75rem;
+  --surface-chat: var(--surface-code);
+  --surface-primary: var(--surface-code);
+  --surface-primary-alt: var(--surface-code);
+  --surface-secondary: var(--surface-code);
+  --surface-tertiary: var(--surface-code);
+  --presentation: var(--surface-code);
+  --text-primary: var(--syntax-text);
+  --text-secondary: var(--syntax-text);
+  --text-secondary-alt: var(--syntax-text);
+  --text-tertiary: var(--syntax-text);
+  --border-light: 112 118 152;
+}
+
+/* Table headers and inline code: LibreChat uses fixed grays here (dark gray in dark mode) */
+html:not(.high-contrast) main:has(#prompt-textarea) .markdown th {
+  background-color: rgb(var(--surface-tertiary));
+  color: rgb(var(--text-primary));
+}
+html:not(.high-contrast) main:has(#prompt-textarea) .markdown :not(pre) > code {
+  background-color: rgb(var(--surface-tertiary));
+  color: rgb(var(--text-primary));
 }
