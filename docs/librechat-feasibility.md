@@ -4,6 +4,13 @@
 **Scope:** Whether LibreChat can host the Glass Box DB Query agent with OMB branding, a locked-down "DB Query only" experience, a reproducible Docker deployment, and external authentication, without an enterprise license.
 **Method:** Review of the LibreChat documentation, its release notes, and its source code (stable `v0.8.8` and the current `main` branch). Nothing has been installed or run yet. Items marked **To verify** need a short hands-on trial.
 
+> **Status (November 18, 2026):** this report predates the implementation and is kept as written. Several of its conclusions were overtaken by what was actually built:
+> - **The agent is configuration after all.** A LibreChat model spec carries the system prompt, tools and skills, so there is no agent in MongoDB, no provisioning script and no Agent Management API. See [librechat-migration-plan.md](librechat-migration-plan.md).
+> - **The tool server is not its own container.** LibreChat starts `agent/mcp_server.py` itself, over stdio, so `mcpSettings.allowedAddresses` is not needed. There is also no Meilisearch container.
+> - **Branding needs no custom image.** `branding/apply.sh` copies the logo, agent icon and stylesheet into the official image's client at startup. See `developer.md`.
+> - **Deployment:** the current deployment is one EC2 instance running the same Compose stack, via `./deploy/aws.sh`. See `docs/aws-deployment.md`.
+> - **Not done yet:** Keycloak, locking users into the agent (`modelSpecs.enforce` is off, so plain models stay selectable for demos), and the `create_plan` design fix (plans are still shared across chats).
+
 ---
 
 ## Summary
