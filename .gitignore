@@ -21,3 +21,6 @@ tests/reports/
 
 # Jupyter autosave checkpoints
 .ipynb_checkpoints/
+
+# Private documents (client requirements, handoff specs); never commit
+docs/private/
